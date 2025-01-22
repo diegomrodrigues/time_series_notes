@@ -15,7 +15,8 @@ PERSPECTIVES = [
 
 TARGET_FOLDERS = []
 EXCLUDED_FOLDERS = [
-    "01. Differential Equations"
+    "01. Differential Equations",
+    "02. Lag Operators"
 ]
 
 # Processing parameters
