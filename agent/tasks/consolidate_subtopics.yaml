@@ -1,4 +1,5 @@
 consolidate_subtopics:
+  model_name: gemini-2.0-flash-thinking-exp-01-21
   response_mime_type: application/json
 
   system_instruction: >
