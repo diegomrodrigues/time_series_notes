@@ -90,6 +90,7 @@ class TaskProcessor:
 
     def process_task(self, task_name: str, task_config: Dict[str, Any], 
                     content: str, expect_json: bool = False,
+                    extract_json: bool = False,
                     files: Optional[List[Any]] = None) -> Optional[str]:
         """Process a single task using the Gemini API."""
         print(f"Processing task: {task_name}")
@@ -99,7 +100,11 @@ class TaskProcessor:
         user_content = self._prepare_user_content(content, task_config, expect_json)
 
         response = chat.send_message(user_content)
-        return self._handle_response(response, task_name)
+        result = self._handle_response(response, task_name)
+        
+        if result and extract_json:
+            return self._extract_json(result)
+        return result
     
     def _initialize_chat(self, model: genai.GenerativeModel, 
                         files: Optional[List[Any]] = None) -> Any:
@@ -130,5 +135,20 @@ class TaskProcessor:
             return response.text
             
         print(f"❌ Failed to process task: {task_name}")
+        return None
+
+    def _extract_json(self, text: str) -> Optional[str]:
+        """Extract JSON from text response."""
+        try:
+            # Find JSON-like content between curly braces
+            start = text.find('{')
+            end = text.rfind('}') + 1
+            if start >= 0 and end > start:
+                json_str = text[start:end]
+                # Validate it's proper JSON
+                json.loads(json_str)  # This will raise an exception if invalid
+                return json_str
+        except json.JSONDecodeError:
+            print("⚠️ Failed to extract valid JSON from response")
         return None
 

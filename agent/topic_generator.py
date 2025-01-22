@@ -167,6 +167,7 @@ class TopicGenerator:
                 name=f"Consolidate Subtopics step {i}",
                 tasks=["consolidate_subtopics"],
                 expect_json=True,
+                extract_json=True,
                 max_iterations=10,
                 use_previous_result=True
             )

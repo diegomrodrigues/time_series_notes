@@ -17,6 +17,7 @@ class ChainStep:
     stop_at: Optional[str] = None  # New: String pattern to stop generation
     max_iterations: int = 5  # New: Maximum number of continuation attempts
     additional_context: Optional[str] = None  # New field for additional context
+    extract_json: bool = False  # New: Extract JSON from text response
     
     def __post_init__(self):
         """Validate the step configuration after initialization."""
@@ -116,6 +117,7 @@ class TaskChain:
                         task_config, 
                         current_content,
                         expect_json=step.expect_json,
+                        extract_json=step.extract_json,
                         files=uploaded_files
                     )
                     
