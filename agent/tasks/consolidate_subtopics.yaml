@@ -1,0 +1,105 @@
+consolidate_subtopics:
+  response_mime_type: application/json
+
+  system_instruction: >
+    Você receberá **um único objeto em JSON** com a seguinte estrutura:
+
+    ```json
+    {
+      "topics": [
+        {
+          "topic": "Nome do tópico",
+          "sub_topics": [
+            "Sub-tópico 1 que pode ter conteúdo similar a outros",
+            "Sub-tópico 2 que pode ter conteúdo similar a outros"
+          ]
+        }
+      ]
+    }
+    ```
+
+    Seu objetivo é **consolidar apenas sub-tópicos verdadeiramente similares** dentro de cada tópico, mesclando seu conteúdo de forma inteligente para:
+    1. NUNCA perder qualquer informação única
+    2. Reduzir apenas redundâncias óbvias e diretas
+    3. Manter a clareza e coesão do texto
+    4. Preservar sub-tópicos distintos separadamente
+
+    ### Diretrizes para consolidação:
+    1. **Identificação de Similaridades**
+       - Identifique sub-tópicos que abordam exatamente o mesmo conceito ou tema
+       - Consolide APENAS quando houver sobreposição significativa de conteúdo
+       - É CRUCIAL preservar TODAS as informações únicas de cada sub-tópico
+       - Mantenha sub-tópicos separados quando apresentarem conceitos distintos
+       - Preserve a estrutura lógica entre diferentes sub-tópicos
+       - Analise o contexto completo para evitar falsas similaridades
+       - Em caso de dúvida sobre similaridade, mantenha os sub-tópicos separados
+
+    2. **Processo de Consolidação**
+       - Combine APENAS sub-tópicos com real similaridade de conteúdo
+       - Garanta que NENHUMA informação seja perdida durante a consolidação
+       - Mantenha sub-tópicos independentes quando tratarem de aspectos diferentes
+       - Preserve a sequência lógica entre os sub-tópicos
+       - Mantenha todas as informações únicas de cada sub-tópico original
+       - Elimine apenas redundâncias diretas e óbvias
+       - Organize o conteúdo de forma lógica e fluida
+
+    3. **Resultado Final**
+       - Retorne **apenas o JSON** resultante, mantendo a estrutura original:
+         ```json
+         {
+           "topics": [
+             {
+               "topic": "Nome do tópico",
+               "sub_topics": [
+                 "Sub-tópico consolidado com todo o conteúdo único preservado"
+               ]
+             }
+           ]
+         }
+         ```
+       - Não inclua texto adicional além do objeto JSON
+       - Garanta que o JSON seja válido
+
+    ```json
+    {
+      "type": "object",
+      "properties": {
+        "topics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "topic": {
+                "type": "string"
+              },
+              "sub_topics": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "topic",
+              "sub_topics"
+            ]
+          }
+        }
+      },
+      "required": [
+        "topics"
+      ]
+    }
+    ```
+
+    Em resumo: você deve **consolidar apenas sub-tópicos verdadeiramente similares** dentro de cada tópico, mesclando seu conteúdo de forma inteligente para reduzir redundâncias enquanto preserva todas as informações únicas, retornando apenas o JSON final.
+
+  user_message: >
+    Consolide os sub-tópicos similares do JSON fornecido, preservando todas as informações únicas:
+
+    {content}
+
+    Lembre-se de:
+    1. Manter a estrutura do JSON
+    2. Preservar todo o conteúdo único
+    3. Eliminar apenas redundâncias diretas 
