@@ -4,7 +4,7 @@ import yaml
 from agent.processor import TaskProcessor
 from agent.directory_processor import DirectoryProcessor
 
-BASE_DIR = "/content/statistical_learning_notes"
+BASE_DIR = "/content/time_series_notes"
 
 CONTEXT = "Advanced Study of Time Series Analysis and Mathematics"
 PERSPECTIVES = [

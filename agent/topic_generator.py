@@ -75,30 +75,23 @@ class TopicGenerator:
 
     def _generate_perspective_set(self, pdf_files: List[Path], 
                                 perspective: str, perspective_index: int, jsons_per_perspective: int) -> List[str]:
-        """Generate multiple sets of topics for a single perspective in parallel."""
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            # Submit JSON generation tasks
-            futures = []
-            for j in range(jsons_per_perspective):
-                future = executor.submit(
-                    self._generate_single_json,
+        """Generate multiple sets of topics for a single perspective sequentially."""
+        perspective_jsons = []
+        
+        # Generate JSONs sequentially
+        for j in range(jsons_per_perspective):
+            try:
+                result = self._generate_single_json(
                     pdf_files,
                     perspective,
                     perspective_index,
                     j
                 )
-                futures.append(future)
-            
-            # Collect results as they complete
-            perspective_jsons = []
-            for future in futures:
-                try:
-                    result = future.result()
-                    if result:
-                        perspective_jsons.append(result)
-                except Exception as e:
-                    print(f"❌ Failed to generate JSON: {str(e)}")
-                    raise
+                if result:
+                    perspective_jsons.append(result)
+            except Exception as e:
+                print(f"❌ Failed to generate JSON: {str(e)}")
+                raise
                 
         return perspective_jsons
 
