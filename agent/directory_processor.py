@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from .processor import TaskProcessor
 from .topic_generator import TopicGenerator
 from .topic_processor import TopicProcessor
+from .utils import retry_on_error
 
 class DirectoryProcessor:
     """Handles the processing of directories and their contents."""
@@ -15,6 +16,7 @@ class DirectoryProcessor:
         self.topic_generator = TopicGenerator(processor, tasks_config)
         self.topic_processor = TopicProcessor(processor, tasks_config, context)
 
+    @retry_on_error(max_retries=3)
     def process_with_topics(
         self,
         directory: Path,
@@ -25,7 +27,7 @@ class DirectoryProcessor:
         num_consolidation_steps: Optional[int] = 2,
         max_previous_topics: Optional[int] = 5
     ):
-        """Generate topics and process them for a directory."""
+        """Generate topics and process them for a directory with retries."""
         try:
             # First, generate topics if they don't exist
             topics_file = directory / "topics.json"

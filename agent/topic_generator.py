@@ -1,13 +1,13 @@
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Dict
 from .chain import TaskChain, ChainStep
 from .processor import TaskProcessor
 import json
 import re
-from concurrent.futures import ThreadPoolExecutor
+from .utils import retry_on_error
 
 class TopicGenerator:
-    """Generates and manages topic hierarchies from PDF documents."""
+    """Generates and manages hierarchical topic structures from PDF documents."""
     
     def __init__(self, processor: TaskProcessor, tasks_config: dict):
         self.processor = processor
@@ -18,24 +18,178 @@ class TopicGenerator:
         directory: Path,
         perspectives: Optional[List[str]] = None,
         num_topics: Optional[int] = None,
-        jsons_per_perspective: Optional[int] = 3,
-        num_consolidation_steps: Optional[int] = 2
+        jsons_per_perspective: int = 3,
+        num_consolidation_steps: int = 2
     ) -> str:
-        """Generate a topics.json file from PDF documents in the directory."""
+        """
+        Generate a structured topics hierarchy from PDF documents.
+        
+        Args:
+            directory: Path containing PDF files
+            perspectives: List of perspective prompts for topic generation
+            num_topics: Number of topic sets to generate if perspectives not provided
+            jsons_per_perspective: Number of topic sets to generate per perspective
+            num_consolidation_steps: Number of consolidation iterations
+        """
         self._validate_input(perspectives, num_topics)
         pdf_files = self._get_pdf_files(directory)
         
-        # Generate topics from different perspectives
-        num_perspectives = len(perspectives) if perspectives else num_topics
-        perspective_results = self._generate_perspective_topics(pdf_files, perspectives, num_perspectives, jsons_per_perspective)
+        # Phase 1: Generate initial topics
+        perspective_results = self._generate_initial_topics(
+            pdf_files=pdf_files,
+            perspectives=perspectives,
+            num_topics=num_topics or len(perspectives),
+            jsons_per_perspective=jsons_per_perspective
+        )
         
-        # Merge and restructure topics
-        merged_result = self._merge_final_topics(perspective_results)
-        restructured_result = self._restructure_topics(directory, merged_result, num_consolidation_steps)
+        # Phase 2: Merge and restructure
+        final_topics = self._process_and_restructure(
+            directory=directory,
+            perspective_results=perspective_results,
+            num_consolidation_steps=num_consolidation_steps
+        )
         
-        self._save_topics(directory, restructured_result)
+        # Save results
+        self._save_topics(directory, final_topics)
+        return final_topics
+
+    def _generate_initial_topics(
+        self,
+        pdf_files: List[Path],
+        perspectives: Optional[List[str]],
+        num_topics: int,
+        jsons_per_perspective: int
+    ) -> List[str]:
+        """Generate initial topic sets from each perspective."""
+        print("\n📚 Generating initial topic sets...")
+        perspective_results = []
         
-        return restructured_result
+        for i in range(num_topics):
+            perspective = perspectives[i] if perspectives else f"Perspective {i+1}"
+            print(f"\n🔍 Processing perspective {i+1}/{num_topics}: {perspective}")
+            
+            # Generate multiple topic sets for this perspective
+            topic_sets = self._generate_topic_sets(
+                pdf_files=pdf_files,
+                perspective=perspective,
+                perspective_index=i,
+                num_sets=jsons_per_perspective
+            )
+            
+            # Merge sets for this perspective
+            merged_perspective = self._merge_topic_sets(topic_sets, i)
+            perspective_results.append(merged_perspective)
+            print(f"✔️ Completed perspective {i+1}/{num_topics}")
+            
+        return perspective_results
+
+    @retry_on_error(max_retries=3)
+    def _generate_topic_sets(
+        self,
+        pdf_files: List[Path],
+        perspective: str,
+        perspective_index: int,
+        num_sets: int
+    ) -> List[str]:
+        """Generate multiple topic sets for a single perspective."""
+        topic_sets = []
+        
+        for set_index in range(num_sets):
+            print(f"  → Generating set {set_index + 1}/{num_sets}")
+            result = self._generate_single_set(
+                pdf_files=pdf_files,
+                perspective=perspective,
+                perspective_index=perspective_index,
+                set_index=set_index
+            )
+            if result:
+                topic_sets.append(result)
+        
+        if not topic_sets:
+            raise Exception(f"Failed to generate any valid topic sets for perspective {perspective_index+1}")
+        return topic_sets
+
+    def _generate_single_set(
+        self,
+        pdf_files: List[Path],
+        perspective: str,
+        perspective_index: int,
+        set_index: int
+    ) -> Optional[str]:
+        """Generate a single set of topics using the task chain."""
+        chain = TaskChain(self.processor, self.tasks_config, [
+            ChainStep(
+                name=f"Generate Topics Set {set_index+1} for Perspective {perspective_index+1}",
+                tasks=["create_topics"],
+                input_files=pdf_files,
+                expect_json=True,
+                max_iterations=3
+            )
+        ])
+        
+        result = chain.run(perspective)
+        if not result:
+            print(f"⚠️ Failed to generate set {set_index+1}")
+        return result
+
+    def _process_and_restructure(
+        self,
+        directory: Path,
+        perspective_results: List[str],
+        num_consolidation_steps: int
+    ) -> str:
+        """Merge all perspectives and restructure based on existing directory structure."""
+        print("\n🔄 Merging and restructuring topics...")
+        
+        # Merge all perspective results
+        merged_topics = self._merge_all_perspectives(perspective_results)
+        
+        # Restructure based on existing directory structure
+        existing_dirs = self._get_existing_directories(directory)
+        return self._restructure_topics(
+            merged_topics=merged_topics,
+            existing_dirs=existing_dirs,
+            num_steps=num_consolidation_steps
+        )
+
+    def _merge_all_perspectives(self, perspective_results: List[str]) -> str:
+        """Merge all perspective results into a single topic structure."""
+        parsed_results = [json.loads(result) for result in perspective_results]
+        merged = self._merge_topic_contents(parsed_results)
+        return json.dumps(merged, indent=2, ensure_ascii=False)
+
+    def _merge_topic_sets(self, topic_sets: List[str], perspective_index: int) -> str:
+        """Merge multiple topic sets for a single perspective."""
+        parsed_sets = [json.loads(topic_set) for topic_set in topic_sets]
+        merged = self._merge_topic_contents(parsed_sets)
+        return json.dumps(merged, indent=2, ensure_ascii=False)
+
+    def _restructure_topics(
+        self,
+        merged_topics: str,
+        existing_dirs: List[str],
+        num_steps: int
+    ) -> str:
+        """Restructure topics based on existing directory structure."""
+        context = json.dumps({"existing_directories": existing_dirs})
+        
+        chain = TaskChain(self.processor, self.tasks_config, [
+            ChainStep(
+                name=f"Consolidate Subtopics step {i}",
+                tasks=["consolidate_subtopics"],
+                expect_json=True,
+                extract_json=True,
+                max_iterations=5,
+                use_previous_result=True,
+                additional_context=context
+            )
+            for i in range(1, num_steps + 1)
+        ])
+        
+        result = chain.run(merged_topics)
+        if not result:
+            raise Exception("Failed to restructure topics")
+        return result
 
     def _validate_input(self, perspectives: Optional[List[str]], num_topics: Optional[int]):
         """Validate input parameters."""
@@ -46,94 +200,13 @@ class TopicGenerator:
         """Get all PDF files in the directory."""
         return list(directory.glob("*.pdf"))
 
-    def _generate_perspective_topics(self, pdf_files: List[Path], 
-                                   perspectives: List[str], num_topics: int, jsons_per_perspective: int) -> List[str]:
-        """Generate topics for each perspective sequentially."""
-        perspective_results = []
-        
-        # Process each perspective sequentially
-        for i, perspective in enumerate(perspectives):
-            print(f"\nProcessing perspective {i+1}/{num_topics}")
-            try:
-                # Generate perspective set
-                perspective_set = self._generate_perspective_set(
-                    pdf_files,
-                    perspective,
-                    i,
-                    jsons_per_perspective
-                )
-                
-                # Merge and store results
-                merged_perspective = self._merge_perspective_set(perspective_set, i)
-                perspective_results.append(merged_perspective)
-                print(f"✔️ Completed perspective {i+1}/{num_topics}")
-            except Exception as e:
-                print(f"❌ Failed to generate perspective {i+1}: {str(e)}")
-                raise
-        
-        return perspective_results
-
-    def _generate_perspective_set(self, pdf_files: List[Path], 
-                                perspective: str, perspective_index: int, jsons_per_perspective: int) -> List[str]:
-        """Generate multiple sets of topics for a single perspective sequentially."""
-        perspective_jsons = []
-        
-        # Generate JSONs sequentially
-        for j in range(jsons_per_perspective):
-            try:
-                result = self._generate_single_json(
-                    pdf_files,
-                    perspective,
-                    perspective_index,
-                    j
-                )
-                if result:
-                    perspective_jsons.append(result)
-            except Exception as e:
-                print(f"❌ Failed to generate JSON: {str(e)}")
-                raise
-                
-        return perspective_jsons
-
-    def _generate_single_json(self, pdf_files: List[Path], perspective: str, 
-                             perspective_index: int, json_index: int) -> Optional[str]:
-        """Generate a single JSON set of topics."""
-        topics_chain = TaskChain(self.processor, self.tasks_config, [
-            ChainStep(
-                name=f"Generate Topics Set {json_index+1} for Perspective {perspective_index+1}",
-                tasks=["create_topics"],
-                input_files=pdf_files,
-                expect_json=True,
-                max_iterations=3
-            )
-        ])
-        
-        result = topics_chain.run(perspective)
-        if not result:
-            raise Exception(f"Failed to generate topics set {json_index+1} for perspective {perspective_index+1}")
-        return result
-
-    def _merge_perspective_set(self, perspective_jsons: List[str], perspective_index: int) -> str:
-        """Merge multiple topic sets for a single perspective by combining their content."""
-        # Parse all JSONs
-        parsed_jsons = [json.loads(json_str) for json_str in perspective_jsons]
-        
-        # Merge the topics using the helper method
-        merged_result = self._merge_topic_contents(parsed_jsons)
-        
-        # Ensure proper encoding of special characters
-        return json.dumps(merged_result, indent=2, ensure_ascii=False)
-
-    def _merge_final_topics(self, perspective_results: List[str]) -> str:
-        """Merge all perspective results by combining their content."""
-        # Parse all JSONs
-        parsed_jsons = [json.loads(result) for result in perspective_results]
-        
-        # Merge the topics using the helper method
-        merged_result = self._merge_topic_contents(parsed_jsons)
-        
-        # Ensure proper encoding of special characters
-        return json.dumps(merged_result, indent=2, ensure_ascii=False)
+    def _get_existing_directories(self, directory: Path) -> List[str]:
+        """Get existing directory names without numbering."""
+        return [
+            re.sub(r'^\d+\.\s*', '', d.name)
+            for d in directory.iterdir() 
+            if d.is_dir()
+        ]
 
     def _merge_topic_contents(self, json_list: List[dict]) -> dict:
         """Merge multiple topic JSONs by combining topics and their sub-topics."""
@@ -164,40 +237,6 @@ class TopicGenerator:
         }
         
         return merged_result
-
-    def _restructure_topics(self, directory: Path, merged_result: str, num_consolidation_steps: int) -> str:
-        """Restructure and consolidate topics based on existing directory structure."""
-        existing_dirs = self._get_existing_directories(directory)
-        existing_dirs_context = json.dumps({"existing_directories": existing_dirs})
-        
-        restructure_chain = self._create_restructure_chain(existing_dirs_context, num_consolidation_steps)
-        result = restructure_chain.run(merged_result)
-        
-        if not result:
-            raise Exception("Failed to restructure and consolidate topics")
-        return result
-
-    def _get_existing_directories(self, directory: Path) -> List[str]:
-        """Get existing directory names without numbering."""
-        return [
-            re.sub(r'^\d+\.\s*', '', d.name)
-            for d in directory.iterdir() 
-            if d.is_dir()
-        ]
-
-    def _create_restructure_chain(self, context: str, num_consolidation_steps: int) -> TaskChain:
-        """Create chain for restructuring topics."""
-        return TaskChain(self.processor, self.tasks_config, [
-            ChainStep(
-                name=f"Consolidate Subtopics step {i}",
-                tasks=["consolidate_subtopics"],
-                expect_json=True,
-                extract_json=True,
-                max_iterations=5,
-                use_previous_result=True
-            )
-            for i in range(1, num_consolidation_steps + 1)
-        ])
 
     def _save_topics(self, directory: Path, content: str) -> None:
         """Save the generated topics to a file."""
