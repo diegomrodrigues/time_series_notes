@@ -48,32 +48,28 @@ class TopicGenerator:
 
     def _generate_perspective_topics(self, pdf_files: List[Path], 
                                    perspectives: List[str], num_topics: int, jsons_per_perspective: int) -> List[str]:
-        """Generate topics for each perspective in parallel."""
+        """Generate topics for each perspective sequentially."""
         perspective_results = []
         
-        with ThreadPoolExecutor(max_workers=3) as executor:
-            # Submit perspective generation tasks
-            futures = []
-            for i, perspective in enumerate(perspectives):
-                print(f"\nSubmitting perspective {i+1}/{num_topics}")
-                future = executor.submit(
-                    self._generate_perspective_set,
+        # Process each perspective sequentially
+        for i, perspective in enumerate(perspectives):
+            print(f"\nProcessing perspective {i+1}/{num_topics}")
+            try:
+                # Generate perspective set
+                perspective_set = self._generate_perspective_set(
                     pdf_files,
                     perspective,
                     i,
                     jsons_per_perspective
                 )
-                futures.append(future)
-            
-            # Collect results as they complete
-            for i, future in enumerate(futures):
-                try:
-                    merged_perspective = self._merge_perspective_set(future.result(), i)
-                    perspective_results.append(merged_perspective)
-                    print(f"✔️ Completed perspective {i+1}/{num_topics}")
-                except Exception as e:
-                    print(f"❌ Failed to generate perspective {i+1}: {str(e)}")
-                    raise
+                
+                # Merge and store results
+                merged_perspective = self._merge_perspective_set(perspective_set, i)
+                perspective_results.append(merged_perspective)
+                print(f"✔️ Completed perspective {i+1}/{num_topics}")
+            except Exception as e:
+                print(f"❌ Failed to generate perspective {i+1}: {str(e)}")
+                raise
         
         return perspective_results
 
