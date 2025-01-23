@@ -293,3 +293,25 @@ class TaskChain:
                 return i
                     
         return 0
+
+    def _handle_json_continuation(self, current_content: str, new_content: str) -> str:
+        """Handle continuation of JSON content by intelligently combining old and new."""
+        # First try to combine as proper JSON
+        combined = self._combine_json_content(current_content, new_content)
+        if combined != new_content:
+            return combined
+            
+        # If JSON combination fails, try to find and remove overlap
+        overlap = self._find_overlap(current_content, new_content)
+        if overlap > 0:
+            return current_content + new_content[overlap:]
+        
+        return current_content + new_content
+
+    def _handle_text_continuation(self, current_content: str, new_content: str) -> str:
+        """Handle continuation of text content by removing overlaps."""
+        overlap = self._find_overlap(current_content, new_content)
+        if overlap > 0:
+            return current_content + new_content[overlap:]
+        
+        return current_content + new_content
