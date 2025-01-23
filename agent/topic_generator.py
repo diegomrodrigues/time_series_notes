@@ -4,6 +4,7 @@ from .chain import TaskChain, ChainStep
 from .processor import TaskProcessor
 import json
 import re
+from concurrent.futures import ThreadPoolExecutor
 
 class TopicGenerator:
     """Generates and manages topic hierarchies from PDF documents."""
@@ -47,39 +48,81 @@ class TopicGenerator:
 
     def _generate_perspective_topics(self, pdf_files: List[Path], 
                                    perspectives: List[str], num_topics: int, jsons_per_perspective: int) -> List[str]:
-        """Generate topics for each perspective."""
+        """Generate topics for each perspective in parallel."""
         perspective_results = []
         
-        for i, perspective in enumerate(perspectives):
-            print(f"\nGenerating topics for perspective {i+1}/{num_topics}")
-            perspective_jsons = self._generate_perspective_set(pdf_files, perspective, i, jsons_per_perspective)
-            merged_perspective = self._merge_perspective_set(perspective_jsons, i)
-            perspective_results.append(merged_perspective)
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            # Submit perspective generation tasks
+            futures = []
+            for i, perspective in enumerate(perspectives):
+                print(f"\nSubmitting perspective {i+1}/{num_topics}")
+                future = executor.submit(
+                    self._generate_perspective_set,
+                    pdf_files,
+                    perspective,
+                    i,
+                    jsons_per_perspective
+                )
+                futures.append(future)
             
+            # Collect results as they complete
+            for i, future in enumerate(futures):
+                try:
+                    merged_perspective = self._merge_perspective_set(future.result(), i)
+                    perspective_results.append(merged_perspective)
+                    print(f"✔️ Completed perspective {i+1}/{num_topics}")
+                except Exception as e:
+                    print(f"❌ Failed to generate perspective {i+1}: {str(e)}")
+                    raise
+        
         return perspective_results
 
     def _generate_perspective_set(self, pdf_files: List[Path], 
                                 perspective: str, perspective_index: int, jsons_per_perspective: int) -> List[str]:
-        """Generate multiple sets of topics for a single perspective."""
-        perspective_jsons = []
-        
-        for j in range(jsons_per_perspective):  # Generate JSONs per perspective
-            topics_chain = TaskChain(self.processor, self.tasks_config, [
-                ChainStep(
-                    name=f"Generate Topics Set {j+1} for Perspective {perspective_index+1}",
-                    tasks=["create_topics"],
-                    input_files=pdf_files,
-                    expect_json=True,
-                    max_iterations=3
+        """Generate multiple sets of topics for a single perspective in parallel."""
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            # Submit JSON generation tasks
+            futures = []
+            for j in range(jsons_per_perspective):
+                future = executor.submit(
+                    self._generate_single_json,
+                    pdf_files,
+                    perspective,
+                    perspective_index,
+                    j
                 )
-            ])
+                futures.append(future)
             
-            result = topics_chain.run(perspective)
-            if not result:
-                raise Exception(f"Failed to generate topics set {j+1} for perspective {perspective_index+1}")
-            perspective_jsons.append(result)
-            
+            # Collect results as they complete
+            perspective_jsons = []
+            for future in futures:
+                try:
+                    result = future.result()
+                    if result:
+                        perspective_jsons.append(result)
+                except Exception as e:
+                    print(f"❌ Failed to generate JSON: {str(e)}")
+                    raise
+                
         return perspective_jsons
+
+    def _generate_single_json(self, pdf_files: List[Path], perspective: str, 
+                             perspective_index: int, json_index: int) -> Optional[str]:
+        """Generate a single JSON set of topics."""
+        topics_chain = TaskChain(self.processor, self.tasks_config, [
+            ChainStep(
+                name=f"Generate Topics Set {json_index+1} for Perspective {perspective_index+1}",
+                tasks=["create_topics"],
+                input_files=pdf_files,
+                expect_json=True,
+                max_iterations=3
+            )
+        ])
+        
+        result = topics_chain.run(perspective)
+        if not result:
+            raise Exception(f"Failed to generate topics set {json_index+1} for perspective {perspective_index+1}")
+        return result
 
     def _merge_perspective_set(self, perspective_jsons: List[str], perspective_index: int) -> str:
         """Merge multiple topic sets for a single perspective by combining their content."""
@@ -157,21 +200,14 @@ class TopicGenerator:
         """Create chain for restructuring topics."""
         return TaskChain(self.processor, self.tasks_config, [
             ChainStep(
-                name="Restructure Topics",
-                tasks=["restructure_topics"],
-                expect_json=True,
-                max_iterations=15,
-                additional_context=context
-            ),
-            *[ChainStep(
                 name=f"Consolidate Subtopics step {i}",
                 tasks=["consolidate_subtopics"],
                 expect_json=True,
                 extract_json=True,
-                max_iterations=10,
+                max_iterations=5,
                 use_previous_result=True
             )
-            for i in range(1, num_consolidation_steps + 1)]
+            for i in range(1, num_consolidation_steps + 1)
         ])
 
     def _save_topics(self, directory: Path, content: str) -> None:
