@@ -12,6 +12,22 @@ class TopicGenerator:
     def __init__(self, processor: TaskProcessor, tasks_config: dict):
         self.processor = processor
         self.tasks_config = tasks_config
+        self.checkpoint_dir = Path(".checkpoints")
+        self.checkpoint_dir.mkdir(exist_ok=True)
+
+    def _save_checkpoint(self, phase: str, directory: Path, data: str) -> None:
+        """Save checkpoint data for a specific phase."""
+        checkpoint_file = self.checkpoint_dir / f"{directory.name}_{phase}.json"
+        checkpoint_file.write_text(data, encoding='utf-8')
+        print(f"📝 Checkpoint saved: {checkpoint_file}")
+
+    def _load_checkpoint(self, phase: str, directory: Path) -> Optional[str]:
+        """Load checkpoint data for a specific phase if it exists."""
+        checkpoint_file = self.checkpoint_dir / f"{directory.name}_{phase}.json"
+        if checkpoint_file.exists():
+            print(f"📂 Loading checkpoint: {checkpoint_file}")
+            return checkpoint_file.read_text()
+        return None
 
     def generate(
         self,
@@ -19,10 +35,11 @@ class TopicGenerator:
         perspectives: Optional[List[str]] = None,
         num_topics: Optional[int] = None,
         jsons_per_perspective: int = 3,
-        num_consolidation_steps: int = 2
+        num_consolidation_steps: int = 2,
+        resume_from: Optional[str] = None
     ) -> str:
         """
-        Generate a structured topics hierarchy from PDF documents.
+        Generate a structured topics hierarchy from PDF documents with checkpoint support.
         
         Args:
             directory: Path containing PDF files
@@ -30,26 +47,44 @@ class TopicGenerator:
             num_topics: Number of topic sets to generate if perspectives not provided
             jsons_per_perspective: Number of topic sets to generate per perspective
             num_consolidation_steps: Number of consolidation iterations
+            resume_from: Optional phase to resume from ('initial_topics' or 'restructure')
         """
         self._validate_input(perspectives, num_topics)
         pdf_files = self._get_pdf_files(directory)
         
         # Phase 1: Generate initial topics
-        perspective_results = self._generate_initial_topics(
-            pdf_files=pdf_files,
-            perspectives=perspectives,
-            num_topics=num_topics or len(perspectives),
-            jsons_per_perspective=jsons_per_perspective
-        )
-        
+        if resume_from != 'restructure':
+            checkpoint_data = self._load_checkpoint('initial_topics', directory)
+            if checkpoint_data:
+                perspective_results = json.loads(checkpoint_data)
+            else:
+                perspective_results = self._generate_initial_topics(
+                    pdf_files=pdf_files,
+                    perspectives=perspectives,
+                    num_topics=num_topics or len(perspectives),
+                    jsons_per_perspective=jsons_per_perspective
+                )
+                self._save_checkpoint('initial_topics', directory, 
+                                    json.dumps(perspective_results))
+        else:
+            checkpoint_data = self._load_checkpoint('initial_topics', directory)
+            if not checkpoint_data:
+                raise ValueError("Cannot resume from restructure without initial topics checkpoint")
+            perspective_results = json.loads(checkpoint_data)
+
         # Phase 2: Merge and restructure
-        final_topics = self._process_and_restructure(
-            directory=directory,
-            perspective_results=perspective_results,
-            num_consolidation_steps=num_consolidation_steps
-        )
-        
-        # Save results
+        checkpoint_data = self._load_checkpoint('restructure', directory)
+        if checkpoint_data:
+            final_topics = checkpoint_data
+        else:
+            final_topics = self._process_and_restructure(
+                directory=directory,
+                perspective_results=perspective_results,
+                num_consolidation_steps=num_consolidation_steps
+            )
+            self._save_checkpoint('restructure', directory, final_topics)
+
+        # Save final results
         self._save_topics(directory, final_topics)
         return final_topics
 
@@ -60,12 +95,21 @@ class TopicGenerator:
         num_topics: int,
         jsons_per_perspective: int
     ) -> List[str]:
-        """Generate initial topic sets from each perspective."""
+        """Generate initial topic sets with per-perspective checkpoints."""
         print("\n📚 Generating initial topic sets...")
         perspective_results = []
         
         for i in range(num_topics):
             perspective = perspectives[i] if perspectives else f"Perspective {i+1}"
+            checkpoint_key = f"perspective_{i+1}"
+            
+            # Try to load perspective checkpoint
+            checkpoint_data = self._load_checkpoint(checkpoint_key, pdf_files[0].parent)
+            if checkpoint_data:
+                perspective_results.append(checkpoint_data)
+                print(f"✔️ Loaded perspective {i+1}/{num_topics} from checkpoint")
+                continue
+
             print(f"\n🔍 Processing perspective {i+1}/{num_topics}: {perspective}")
             
             # Generate multiple topic sets for this perspective
@@ -79,6 +123,9 @@ class TopicGenerator:
             # Merge sets for this perspective
             merged_perspective = self._merge_topic_sets(topic_sets, i)
             perspective_results.append(merged_perspective)
+            
+            # Save perspective checkpoint
+            self._save_checkpoint(checkpoint_key, pdf_files[0].parent, merged_perspective)
             print(f"✔️ Completed perspective {i+1}/{num_topics}")
             
         return perspective_results
