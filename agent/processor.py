@@ -4,6 +4,7 @@ from datetime import datetime
 import json
 from typing import Optional, Dict, Any, List
 from pathlib import Path
+from .utils import retry_on_error
 
 class TaskProcessor:
     """Handles communication with the Gemini API for processing tasks."""
