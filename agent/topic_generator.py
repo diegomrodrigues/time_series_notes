@@ -155,7 +155,7 @@ class TopicGenerator:
                 stop_at="<!-- END -->",
                 max_iterations=5
             )
-        ])
+        ], debug=self.debug)
         
         for attempt in range(3):
             if self.debug:

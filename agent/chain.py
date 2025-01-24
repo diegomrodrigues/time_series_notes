@@ -252,9 +252,9 @@ class TaskChain:
     def _process_task_result(self, result: str, current_content: str, step: ChainStep, 
                            iteration: int, last_valid_json: Optional[str]) -> tuple[str, Optional[str], bool]:
         """Process task result and handle JSON/text content appropriately."""
-        should_stop = False
+        should_stop = False  # Changed to False by default
         
-        if self.debug:  # Add debug output
+        if self.debug:
             print("\n" + "═" * 50)
             print(f"🔍 DEBUG: Task Result (Iteration {iteration + 1})")
             print(f"Step: {step.name}")
@@ -272,28 +272,27 @@ class TaskChain:
         if step.expect_json:
             try:
                 json.loads(current_content)
-                should_stop = True
                 last_valid_json = current_content
+                should_stop = True  # Stop if we have valid JSON
             except json.JSONDecodeError:
-                pass
+                should_stop = False
+        elif step.stop_at and step.stop_at in current_content:
+            should_stop = True  # Stop if stop marker is found
                 
         return current_content, last_valid_json, should_stop
 
     def _should_stop_iteration(self, content: str, step: ChainStep, last_valid_json: Optional[str]) -> bool:
         """Determine if iteration should stop based on content and step configuration."""
-        # If we expect JSON and we've got at least one valid parse, stop immediately
-        if step.expect_json and last_valid_json is not None:
-            return True
+        # If we expect JSON, only stop if we have valid JSON
+        if step.expect_json:
+            return last_valid_json is not None
         
-        if not step.stop_at and not step.expect_json:
-            # If no stop_at pattern is given and we don't expect JSON, just stop
-            return True
-
-        if step.stop_at and step.stop_at in content:
-            # If a stop_at pattern is found in the content, stop
-            return True
-
-        return False
+        # If we have a stop pattern, only stop when it's found
+        if step.stop_at:
+            return step.stop_at in content
+        
+        # If no special conditions, stop after first iteration
+        return True
 
     def _combine_json_content(self, current: str, new: str) -> str:
         """Attempt to combine two JSON contents intelligently."""

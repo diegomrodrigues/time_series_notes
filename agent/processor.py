@@ -159,6 +159,14 @@ class TaskProcessor:
         """Handle the model's response."""
         if response.text:
             print(f"✓ Successfully completed task: {task_name}")
+            # If response is JSON, ensure it's properly formatted
+            if response.type == "application/json":
+                try:
+                    # Parse and re-serialize to ensure valid JSON
+                    return json.dumps(json.loads(response.text), ensure_ascii=False)
+                except json.JSONDecodeError:
+                    print(f"❌ Invalid JSON response from task: {task_name}")
+                    return None
             return response.text
             
         print(f"❌ Failed to process task: {task_name}")

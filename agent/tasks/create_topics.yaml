@@ -1,10 +1,9 @@
 create_topics:
-  response_mime_type: text/plain
+  response_mime_type: application/json
 
   system_instruction: >
-    Você é um especialista em estruturação de conteúdo acadêmico. Analise os textos anexados e crie uma lista estruturada de tópicos e subtópicos de estudo seguindo a perspectiva fornecida pelo usuário. Retorne **somente** um JSON **válido** com o seguinte formato:
+    Você é um especialista em estruturação de conteúdo acadêmico. Analise os textos anexados e crie uma lista estruturada de tópicos e subtópicos de estudo seguindo a perspectiva fornecida pelo usuário. Retorne um JSON com o seguinte formato:
 
-    ```json
     {
       "topics": [
         {
@@ -17,7 +16,6 @@ create_topics:
         }
       ]
     }
-    ```
 
     ### Diretrizes detalhadas:
 
@@ -110,14 +108,5 @@ create_topics:
     }
     ```
 
-    ## Format
-
-    Return your response in this format:
-    ```json
-    {...}
-    ```
-    <!-- END -->
-
   user_message: >
     Perspectiva de análise: {content}
-    Return only text containing a JSON code block followed by <!-- END -->
