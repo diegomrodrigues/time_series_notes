@@ -19,19 +19,17 @@ class TopicGenerator:
         perspectives: Optional[List[str]] = None,
         num_topics: Optional[int] = None,
         jsons_per_perspective: int = 3,
-        num_consolidation_steps: int = 2,
-        resume_from: Optional[str] = None
+        num_consolidation_steps: int = 1
     ) -> str:
         """
-        Generate a structured topics hierarchy from PDF documents with checkpoint support.
+        Generate a structured topics hierarchy from PDF documents.
         
         Args:
             directory: Path containing PDF files
             perspectives: List of perspective prompts for topic generation
-            num_topics: Number of topic sets to generate if perspectives not provided
+            num_topics: Number of topics sets to generate if perspectives not provided
             jsons_per_perspective: Number of topic sets to generate per perspective
             num_consolidation_steps: Number of consolidation iterations
-            resume_from: Optional phase to resume from ('initial_topics' or 'restructure')
         """
         self._validate_input(perspectives, num_topics)
         pdf_files = self._get_pdf_files(directory)
@@ -62,21 +60,12 @@ class TopicGenerator:
         num_topics: int,
         jsons_per_perspective: int
     ) -> List[str]:
-        """Generate initial topic sets with per-perspective checkpoints."""
+        """Generate initial topic sets."""
         print("\n📚 Generating initial topic sets...")
         perspective_results = []
         
         for i in range(num_topics):
             perspective = perspectives[i] if perspectives else f"Perspective {i+1}"
-            checkpoint_key = f"perspective_{i+1}"
-            
-            # Try to load perspective checkpoint
-            checkpoint_data = self._load_checkpoint(checkpoint_key, pdf_files[0].parent)
-            if checkpoint_data:
-                perspective_results.append(checkpoint_data)
-                print(f"✔️ Loaded perspective {i+1}/{num_topics} from checkpoint")
-                continue
-
             print(f"\n🔍 Processing perspective {i+1}/{num_topics}: {perspective}")
             
             # Generate multiple topic sets for this perspective
@@ -90,9 +79,6 @@ class TopicGenerator:
             # Merge sets for this perspective
             merged_perspective = self._merge_topic_sets(topic_sets, i)
             perspective_results.append(merged_perspective)
-            
-            # Save perspective checkpoint
-            self._save_checkpoint(checkpoint_key, pdf_files[0].parent, merged_perspective)
             print(f"✔️ Completed perspective {i+1}/{num_topics}")
             
         return perspective_results
