@@ -15,7 +15,7 @@ class TaskProcessor:
         self.api_key = api_key
         genai.configure(api_key=api_key)
         self._configure_safety_settings()
-        self.debug = debug
+        self.debug = True
     
     def _configure_safety_settings(self):
         """Configure default safety settings for the model."""
