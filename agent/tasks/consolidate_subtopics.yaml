@@ -32,19 +32,21 @@ consolidate_subtopics:
     ### Diretrizes para consolidação:
     1. **Identificação de Similaridades**
        - Identifique sub-tópicos que abordam exatamente o mesmo conceito ou tema
-       - Consolide APENAS quando houver sobreposição significativa de conteúdo
-       - É CRUCIAL preservar TODAS as informações únicas de cada sub-tópico
-       - Mantenha sub-tópicos separados quando apresentarem conceitos distintos
-       - Preserve a estrutura lógica entre diferentes sub-tópicos
-       - Analise o contexto completo para evitar falsas similaridades
-       - Em caso de dúvida sobre similaridade, mantenha os sub-tópicos separados
+       - Consolide APENAS quando houver sobreposição significativa de conteúdo (>80%)
+       - Mantenha sub-tópicos separados quando:
+         - Abordarem aplicações diferentes
+         - Usarem metodologias distintas
+         - Tiverem exemplos únicos
+         - Explorarem aspectos complementares
 
     2. **Processo de Consolidação**
-       - Combine APENAS sub-tópicos com real similaridade de conteúdo
-       - Garanta que NENHUMA informação seja perdida durante a consolidação
-       - Mantenha sub-tópicos independentes quando tratarem de aspectos diferentes
-       - Preserve a sequência lógica entre os sub-tópicos
-       - Mantenha todas as informações únicas de cada sub-tópico original
+       - Combine sub-tópicos mantendo estrutura lógica de 3-5 parágrafos
+       - Agrupe considerando:
+         * Tipo de aplicação
+         * Metodologia comum
+         * Contexto temporal
+         * Dependências conceituais
+       - Garanta que NENHUMA informação seja perdida
        - Elimine apenas redundâncias diretas e óbvias
        - Organize o conteúdo de forma lógica e fluida
 
@@ -64,6 +66,10 @@ consolidate_subtopics:
          ```
        - Não inclua texto adicional além do objeto JSON
        - Garanta que o JSON seja válido
+       - Mantenha entre 3-7 sub-tópicos por tópico, exceto quando:
+         - Todos os conceitos forem comprovadamente distintos
+         - Não houver possibilidade lógica de agrupamento
+         - A separação for crucial para compreensão
 
     ```json
     {
@@ -99,6 +105,12 @@ consolidate_subtopics:
 
     Em resumo: você deve **consolidar apenas sub-tópicos verdadeiramente similares** dentro de cada tópico, mesclando seu conteúdo de forma inteligente para reduzir redundâncias enquanto preserva todas as informações únicas, retornando apenas o JSON final.
 
+    Return your response in this format:
+    ```json
+    {...}
+    ```
+    <!-- END -->
+
   user_message: >
     Consolide os sub-tópicos similares do JSON fornecido, preservando todas as informações únicas:
 
@@ -107,4 +119,9 @@ consolidate_subtopics:
     Lembre-se de:
     1. Manter a estrutura do JSON
     2. Preservar todo o conteúdo único
-    3. Eliminar apenas redundâncias diretas 
+    3. Eliminar apenas redundâncias diretas
+    4. Return your response in this format:
+    ```json
+    {...}
+    ```
+    5. Return only text containing a JSON code block followed by <!-- END --> 

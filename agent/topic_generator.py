@@ -12,22 +12,6 @@ class TopicGenerator:
     def __init__(self, processor: TaskProcessor, tasks_config: dict):
         self.processor = processor
         self.tasks_config = tasks_config
-        self.checkpoint_dir = Path(".checkpoints")
-        self.checkpoint_dir.mkdir(exist_ok=True)
-
-    def _save_checkpoint(self, phase: str, directory: Path, data: str) -> None:
-        """Save checkpoint data for a specific phase."""
-        checkpoint_file = self.checkpoint_dir / f"{directory.name}_{phase}.json"
-        checkpoint_file.write_text(data, encoding='utf-8')
-        print(f"📝 Checkpoint saved: {checkpoint_file}")
-
-    def _load_checkpoint(self, phase: str, directory: Path) -> Optional[str]:
-        """Load checkpoint data for a specific phase if it exists."""
-        checkpoint_file = self.checkpoint_dir / f"{directory.name}_{phase}.json"
-        if checkpoint_file.exists():
-            print(f"📂 Loading checkpoint: {checkpoint_file}")
-            return checkpoint_file.read_text()
-        return None
 
     def generate(
         self,
@@ -53,36 +37,19 @@ class TopicGenerator:
         pdf_files = self._get_pdf_files(directory)
         
         # Phase 1: Generate initial topics
-        if resume_from != 'restructure':
-            checkpoint_data = self._load_checkpoint('initial_topics', directory)
-            if checkpoint_data:
-                perspective_results = json.loads(checkpoint_data)
-            else:
-                perspective_results = self._generate_initial_topics(
-                    pdf_files=pdf_files,
-                    perspectives=perspectives,
-                    num_topics=num_topics or len(perspectives),
-                    jsons_per_perspective=jsons_per_perspective
-                )
-                self._save_checkpoint('initial_topics', directory, 
-                                    json.dumps(perspective_results))
-        else:
-            checkpoint_data = self._load_checkpoint('initial_topics', directory)
-            if not checkpoint_data:
-                raise ValueError("Cannot resume from restructure without initial topics checkpoint")
-            perspective_results = json.loads(checkpoint_data)
+        perspective_results = self._generate_initial_topics(
+            pdf_files=pdf_files,
+            perspectives=perspectives,
+            num_topics=num_topics or len(perspectives),
+            jsons_per_perspective=jsons_per_perspective
+        )
 
         # Phase 2: Merge and restructure
-        checkpoint_data = self._load_checkpoint('restructure', directory)
-        if checkpoint_data:
-            final_topics = checkpoint_data
-        else:
-            final_topics = self._process_and_restructure(
-                directory=directory,
-                perspective_results=perspective_results,
-                num_consolidation_steps=num_consolidation_steps
-            )
-            self._save_checkpoint('restructure', directory, final_topics)
+        final_topics = self._process_and_restructure(
+            directory=directory,
+            perspective_results=perspective_results,
+            num_consolidation_steps=num_consolidation_steps
+        )
 
         # Save final results
         self._save_topics(directory, final_topics)
@@ -169,15 +136,28 @@ class TopicGenerator:
                 name=f"Generate Topics Set {set_index+1} for Perspective {perspective_index+1}",
                 tasks=["create_topics"],
                 input_files=pdf_files,
-                expect_json=True,
-                max_iterations=3
+                extract_json=True,
+                stop_at="<!-- END -->",
+                max_iterations=5
             )
         ])
         
-        result = chain.run(perspective)
-        if not result:
-            print(f"⚠️ Failed to generate set {set_index+1}")
-        return result
+        for attempt in range(3):
+            result = chain.run(perspective)
+            if result and self._validate_json(result):
+                return result
+            print(f"⚠️ Retrying set {set_index+1} (attempt {attempt+1}/3)")
+        return None
+
+    def _validate_json(self, json_str: str) -> bool:
+        """Validate JSON structure."""
+        try:
+            data = json.loads(json_str)
+            if not isinstance(data, dict) or 'topics' not in data:
+                return False
+            return True
+        except json.JSONDecodeError:
+            return False
 
     def _process_and_restructure(
         self,
@@ -217,24 +197,24 @@ class TopicGenerator:
         existing_dirs: List[str],
         num_steps: int
     ) -> str:
-        """Restructure topics based on existing directory structure."""
+        """Restructure topics with JSON extraction."""
         context = json.dumps({"existing_directories": existing_dirs})
         
         chain = TaskChain(self.processor, self.tasks_config, [
             ChainStep(
                 name=f"Consolidate Subtopics step {i}",
                 tasks=["consolidate_subtopics"],
-                expect_json=True,
                 extract_json=True,
                 max_iterations=5,
                 use_previous_result=True,
-                additional_context=context
+                additional_context=context,
+                stop_at="<!-- END -->"
             )
             for i in range(1, num_steps + 1)
         ])
         
         result = chain.run(merged_topics)
-        if not result:
+        if not result or not self._validate_json(result):
             raise Exception("Failed to restructure topics")
         return result
 
