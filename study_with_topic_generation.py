@@ -92,8 +92,7 @@ def main():
                 max_workers=MAX_WORKERS,
                 jsons_per_perspective=JSONS_PER_PERSPECTIVE,
                 num_consolidation_steps=NUM_CONSOLIDATION_STEPS,
-                max_previous_topics=MAX_PREVIOUS_TOPICS,
-                debug=args.debug
+                max_previous_topics=MAX_PREVIOUS_TOPICS
             )
         else:
             print(f"Directory not found: {directory}")

@@ -281,12 +281,18 @@ class TaskChain:
 
     def _should_stop_iteration(self, content: str, step: ChainStep, last_valid_json: Optional[str]) -> bool:
         """Determine if iteration should stop based on content and step configuration."""
+        # If we expect JSON and we've got at least one valid parse, stop immediately
+        if step.expect_json and last_valid_json is not None:
+            return True
+        
         if not step.stop_at and not step.expect_json:
+            # If no stop_at pattern is given and we don't expect JSON, just stop
             return True
-            
+
         if step.stop_at and step.stop_at in content:
+            # If a stop_at pattern is found in the content, stop
             return True
-            
+
         return False
 
     def _combine_json_content(self, current: str, new: str) -> str:
