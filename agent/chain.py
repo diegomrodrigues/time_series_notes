@@ -154,7 +154,7 @@ class TaskChain:
                 if result is None:
                     if self.debug:
                         print("    ❌ Task execution failed")
-                    return last_valid_json if step.expect_json and last_valid_json else None
+                    return None
                 
                 if self.debug:
                     print(f"    ✔️ Task execution successful")
@@ -239,6 +239,9 @@ class TaskChain:
                 files=files
             )
             
+            if self.debug:
+                print(f"Model Response: \n {result.text[:500]}")
+
             if not result:
                 print(f"❌ Step failed at task: {task_name}")
                 return None
