@@ -2,9 +2,11 @@ import google.generativeai as genai
 from google.generativeai.types import HarmCategory, HarmBlockThreshold
 from datetime import datetime
 import json
+import time
 from typing import Optional, Dict, Any, List
 from pathlib import Path
 from .utils import retry_on_error
+import re  # Ensure the re module is imported
 
 class TaskProcessor:
     """Handles communication with the Gemini API for processing tasks."""
@@ -83,7 +85,12 @@ class TaskProcessor:
         result = self._handle_response(response, task_name)
         
         if result and extract_json:
-            return self._extract_json(result)
+            extracted_json = self._extract_json(result)
+            if extracted_json:
+                return extracted_json
+            else:
+                print("⚠️ JSON extraction failed.")
+                return None
         return result
     
     def _initialize_chat(self, model: genai.GenerativeModel, 
@@ -118,17 +125,18 @@ class TaskProcessor:
         return None
 
     def _extract_json(self, text: str) -> Optional[str]:
-        """Extract JSON from text response."""
+        """Extract JSON from text response more robustly."""
         try:
-            # Find JSON-like content between curly braces
-            start = text.find('{')
-            end = text.rfind('}') + 1
-            if start >= 0 and end > start:
-                json_str = text[start:end]
-                # Validate it's proper JSON
-                json.loads(json_str)  # This will raise an exception if invalid
-                return json_str
-        except json.JSONDecodeError:
-            print("⚠️ Failed to extract valid JSON from response")
-        return None
-
+            # Use regex to find JSON within a ```json code block
+            json_block = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
+            if not json_block:
+                print("⚠️ JSON code block not found in response")
+                return None
+            
+            json_str = json_block.group(1)
+            # Validate JSON
+            json.loads(json_str)
+            return json_str
+        except json.JSONDecodeError as e:
+            print(f"⚠️ Failed to decode JSON: {e}")
+            return None
