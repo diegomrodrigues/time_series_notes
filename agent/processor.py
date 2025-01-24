@@ -105,10 +105,11 @@ class TaskProcessor:
                 print("  - Sending message to model...")
             
             response = chat.send_message(user_content)
-            result = self._handle_response(response, task_name)
+            result = response.text
 
             if self.debug:
                 print(f"  - Response received: {bool(result)}")
+                print(result[:500])
                 if result:
                     print(f"  - Response length: {len(result)}")
             
