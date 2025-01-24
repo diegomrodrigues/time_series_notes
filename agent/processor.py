@@ -110,10 +110,9 @@ class TaskProcessor:
                    "exactly from its end. Do not repeat any previous content.")
         
         if task_config.get("user_message"):
-            # Escape any curly braces in the content before formatting
-            escaped_content = content.replace("{", "{{").replace("}", "}}")
+            # Use replace instead of format for safer string handling
             user_message = task_config["user_message"]
-            return user_message.format(content=escaped_content)                               
+            return user_message.replace("{content}", content)
     
         return content
     
