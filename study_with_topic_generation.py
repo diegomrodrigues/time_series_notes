@@ -17,14 +17,15 @@ PERSPECTIVES = [
 TARGET_FOLDERS = []
 EXCLUDED_FOLDERS = [
     "01. Differential Equations",
-    "02. Lag Operators"
+    "02. Lag Operators",
+    "03. Linear Regression Models"
 ]
 
 # Processing parameters
 NUM_TOPICS = None
 MAX_WORKERS = 2
 JSONS_PER_PERSPECTIVE = 2
-NUM_CONSOLIDATION_STEPS = 1
+NUM_CONSOLIDATION_STEPS = 2
 MAX_PREVIOUS_TOPICS = 5
 
 def load_tasks_config(tasks_dir: str = './agent/tasks') -> dict:
