@@ -240,7 +240,7 @@ class TaskChain:
             )
             
             if self.debug:
-                print(f"Model Response: \n {result.text[:500]}")
+                print(f"Model Response: \n {result[:500]}")
 
             if not result:
                 print(f"❌ Step failed at task: {task_name}")
