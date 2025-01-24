@@ -287,7 +287,7 @@ class TaskChain:
     def _should_stop_iteration(self, content: str, step: ChainStep, last_valid_json: Optional[str]) -> bool:
         """Determine if iteration should stop based on content and step configuration."""
         # If we expect JSON, only stop if we have valid JSON
-        if step.expect_json:
+        if step.expect_json or step.extract_json:
             return last_valid_json is not None
         
         # If we have a stop pattern, only stop when it's found
