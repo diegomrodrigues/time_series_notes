@@ -161,7 +161,7 @@ class TaskChain:
                     print(f"    - Result length: {len(result)}")
                 
                 current_content, last_valid_json, should_stop = self._process_task_result(
-                    result, current_content, step, iterations, last_valid_json
+                    result, current_content, step, iterations, last_valid_json, task_name
                 )
                 
                 if should_stop:
@@ -253,9 +253,9 @@ class TaskChain:
             return None
 
     def _process_task_result(self, result: str, current_content: str, step: ChainStep, 
-                           iteration: int, last_valid_json: Optional[str]) -> tuple[str, Optional[str], bool]:
+                           iteration: int, last_valid_json: Optional[str], task_name: str) -> tuple[str, Optional[str], bool]:
         """Process task result and handle JSON/text content appropriately."""
-        should_stop = False  # Changed to False by default
+        should_stop = False
         
         if self.debug:
             print("\n" + "═" * 50)
@@ -276,11 +276,13 @@ class TaskChain:
             try:
                 json.loads(current_content)
                 last_valid_json = current_content
-                should_stop = True  # Stop if we have valid JSON
+                # Only stop if we have valid JSON and this is the last task
+                should_stop = task_name == step.tasks[-1]
             except json.JSONDecodeError:
                 should_stop = False
         elif step.stop_at and step.stop_at in current_content:
-            should_stop = True  # Stop if stop marker is found
+            # Only stop if we hit the stop marker and this is the last task
+            should_stop = task_name == step.tasks[-1]
                 
         return current_content, last_valid_json, should_stop
 
