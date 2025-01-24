@@ -151,7 +151,7 @@ class TopicGenerator:
                 name=f"Generate Topics Set {set_index+1} for Perspective {perspective_index+1}",
                 tasks=["create_topics"],
                 input_files=pdf_files,
-                extract_json=True,
+                expect_json=True,
                 stop_at="<!-- END -->",
                 max_iterations=5
             )
