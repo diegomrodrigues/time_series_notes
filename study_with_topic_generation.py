@@ -3,6 +3,7 @@ import os
 import yaml
 from agent.processor import TaskProcessor
 from agent.directory_processor import DirectoryProcessor
+import argparse
 
 BASE_DIR = "/content/time_series_notes"
 
@@ -56,6 +57,12 @@ def get_numbered_folders(base_dir: Path) -> list[str]:
     return sorted(folders)
 
 def main():
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Process study materials with topic generation')
+    parser.add_argument('--debug', type=lambda x: x.lower() == 'true', default=False,
+                       help='Enable debug mode (true/false)')
+    args = parser.parse_args()
+    
     # Load configuration and initialize processor
     tasks_config = load_tasks_config()
     api_key = os.getenv("GOOGLE_API_KEY")
@@ -63,7 +70,12 @@ def main():
         raise ValueError("GOOGLE_API_KEY environment variable is required")
     
     processor = TaskProcessor(api_key=api_key)
-    directory_processor = DirectoryProcessor(processor, tasks_config, CONTEXT)
+    directory_processor = DirectoryProcessor(
+        processor, 
+        tasks_config, 
+        CONTEXT,
+        debug=args.debug
+    )
     
     # Define base directory and settings
     base_dir = Path(BASE_DIR)
@@ -80,7 +92,8 @@ def main():
                 max_workers=MAX_WORKERS,
                 jsons_per_perspective=JSONS_PER_PERSPECTIVE,
                 num_consolidation_steps=NUM_CONSOLIDATION_STEPS,
-                max_previous_topics=MAX_PREVIOUS_TOPICS
+                max_previous_topics=MAX_PREVIOUS_TOPICS,
+                debug=args.debug
             )
         else:
             print(f"Directory not found: {directory}")

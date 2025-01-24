@@ -50,12 +50,13 @@ class ChainStep:
 class TaskChain:
     """Manages the sequential processing of tasks in steps."""
     
-    def __init__(self, task_processor: TaskProcessor, tasks_config: Dict[str, Dict[str, Any]], steps: List[ChainStep]):
+    def __init__(self, task_processor: TaskProcessor, tasks_config: Dict[str, Dict[str, Any]], steps: List[ChainStep], debug: bool = False):
         """Initialize the task chain with a processor, configuration, and steps."""
         self.processor = task_processor
         self.tasks_config = tasks_config
         self.steps = steps
         self.previous_result = None  # Store previous step result
+        self.debug = debug  # Store debug flag
         self.validate_config()
         self.validate_steps()
     
@@ -84,53 +85,102 @@ class TaskChain:
     @retry_on_error(max_retries=3)
     def run(self, initial_content: str) -> Optional[str]:
         """Run all steps in the chain sequentially with retries."""
+        if self.debug:
+            print("\n🔍 DEBUG: Starting chain execution")
+            print(f"  - Number of steps: {len(self.steps)}")
+            print(f"  - Initial content length: {len(initial_content)}")
+        
         print("🔄 Starting task chain execution...")
         
         current_content = initial_content
-        for step in self.steps:
+        for i, step in enumerate(self.steps, 1):
+            if self.debug:
+                print(f"\n🔍 DEBUG: Running step {i}/{len(self.steps)}")
+                print(f"  - Step name: {step.name}")
+                print(f"  - Tasks: {step.tasks}")
+            
             result = self.process_step(step, current_content)
             if result:
+                if self.debug:
+                    print(f"  ✔️ Step completed successfully")
+                    print(f"  - Result length: {len(result)}")
                 current_content = result
             else:
+                if self.debug:
+                    print(f"  ❌ Step failed")
                 raise Exception(f"❌ Chain failed at step: {step.name}")
         
+        if self.debug:
+            print("\n✨ DEBUG: Chain execution completed")
+            print(f"  - Final content length: {len(current_content)}")
+        
         print("✨ Task chain completed successfully")
-        return current_content 
+        return current_content
 
     @retry_on_error(max_retries=3)
     def process_step(self, step: ChainStep, content: str) -> Optional[str]:
         """Process all tasks in a single step with retries."""
-        print(f"\n📎 Processing step: {step.name}")
+        if self.debug:
+            print("\n🔍 DEBUG: Processing step")
+            print(f"  - Step name: {step.name}")
+            print(f"  - Input content length: {len(content)}")
+            print(f"  - Max iterations: {step.max_iterations}")
+            print(f"  - Expect JSON: {step.expect_json}")
+            print(f"  - Extract JSON: {step.extract_json}")
         
         content = self._prepare_step_content(step, content)
         uploaded_files = self._handle_file_uploads(step)
+        
+        if self.debug and uploaded_files:
+            print(f"  - Uploaded files: {len(uploaded_files)}")
         
         current_content = content
         iterations = 0
         last_valid_json = None
         
         while iterations < step.max_iterations:
+            if self.debug:
+                print(f"\n  - Starting iteration {iterations + 1}/{step.max_iterations}")
+            
             for task_name in step.tasks:
+                if self.debug:
+                    print(f"    - Executing task: {task_name}")
+                
                 print(f"\n→ Executing task ({iterations + 1}/{step.max_iterations}): {task_name}")
                 
                 task_config = self._prepare_task_config(task_name, step, current_content, iterations)
                 result = self._execute_task(task_name, task_config, current_content, step, uploaded_files, last_valid_json)
                 
                 if result is None:
+                    if self.debug:
+                        print("    ❌ Task execution failed")
                     return last_valid_json if step.expect_json and last_valid_json else None
+                
+                if self.debug:
+                    print(f"    ✔️ Task execution successful")
+                    print(f"    - Result length: {len(result)}")
                 
                 current_content, last_valid_json, should_stop = self._process_task_result(
                     result, current_content, step, iterations, last_valid_json
                 )
                 
                 if should_stop:
+                    if self.debug:
+                        print("    - Stop condition met")
                     break
             
             if self._should_stop_iteration(current_content, step, last_valid_json):
+                if self.debug:
+                    print("  - Iteration stop condition met")
                 break
                 
             iterations += 1
-            
+        
+        if self.debug:
+            print("\n  ✔️ Step processing completed")
+            print(f"  - Final content length: {len(current_content)}")
+            print(f"  - Total iterations: {iterations}")
+        
         self.previous_result = current_content
         return current_content
 
@@ -164,13 +214,13 @@ class TaskChain:
         return (
             "Continue completing this JSON structure.\n"
             "Do not repeat any previous content, only provide the missing parts.\n"
-            "Exactly from you left.\n"
+            "Exactly from you left and remember to end with the marker <!-- END -->.\n"
         )
 
     def _prepare_text_continuation_prompt(self, last_chunk: str) -> str:
         """Prepare prompt for continuing text content."""
         return (
-            "Continue exactly from where this text ends. "
+            "Continue exactly from where this text ends"
             "Do not repeat any previous content. Here's the last part:\n\n"
             f"{last_chunk}\n\n"
             "Continue the text from this point, providing only new content:\n"
@@ -203,6 +253,13 @@ class TaskChain:
                            iteration: int, last_valid_json: Optional[str]) -> tuple[str, Optional[str], bool]:
         """Process task result and handle JSON/text content appropriately."""
         should_stop = False
+        
+        if self.debug:  # Add debug output
+            print("\n" + "═" * 50)
+            print(f"🔍 DEBUG: Task Result (Iteration {iteration + 1})")
+            print(f"Step: {step.name}")
+            print(f"Raw Result:\n{result}")
+            print("═" * 50 + "\n")
         
         if iteration > 0:
             if step.expect_json:

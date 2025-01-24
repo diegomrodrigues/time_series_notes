@@ -9,9 +9,10 @@ from .utils import retry_on_error
 class TopicGenerator:
     """Generates and manages hierarchical topic structures from PDF documents."""
     
-    def __init__(self, processor: TaskProcessor, tasks_config: dict):
+    def __init__(self, processor: TaskProcessor, tasks_config: dict, debug: bool = False):
         self.processor = processor
         self.tasks_config = tasks_config
+        self.debug = debug  # Store debug flag
 
     def generate(
         self,
@@ -21,16 +22,15 @@ class TopicGenerator:
         jsons_per_perspective: int = 3,
         num_consolidation_steps: int = 1
     ) -> str:
-        """
-        Generate a structured topics hierarchy from PDF documents.
+        if self.debug:
+            print("\n🔵 DEBUG MODE ACTIVATED 🔵")
+            print(f"Initial Parameters:")
+            print(f"- Directory: {directory}")
+            print(f"- Perspectives: {perspectives or 'None'}")
+            print(f"- Num Topics: {num_topics}")
+            print(f"- JSONs per Perspective: {jsons_per_perspective}")
+            print(f"- Consolidation Steps: {num_consolidation_steps}\n")
         
-        Args:
-            directory: Path containing PDF files
-            perspectives: List of perspective prompts for topic generation
-            num_topics: Number of topics sets to generate if perspectives not provided
-            jsons_per_perspective: Number of topic sets to generate per perspective
-            num_consolidation_steps: Number of consolidation iterations
-        """
         self._validate_input(perspectives, num_topics)
         pdf_files = self._get_pdf_files(directory)
         
@@ -41,6 +41,11 @@ class TopicGenerator:
             num_topics=num_topics or len(perspectives),
             jsons_per_perspective=jsons_per_perspective
         )
+
+        if self.debug:
+            print("\n🔵 DEBUG: Initial Topics Results")
+            for i, result in enumerate(perspective_results):
+                print(f"Perspective {i+1}:\n{result[:500]}...\n")  # Show first 500 chars
 
         # Phase 2: Merge and restructure
         final_topics = self._process_and_restructure(
@@ -92,18 +97,37 @@ class TopicGenerator:
         num_sets: int
     ) -> List[str]:
         """Generate multiple topic sets for a single perspective."""
+        if self.debug:
+            print(f"\n🔍 DEBUG: Starting _generate_topic_sets")
+            print(f"  - Perspective: {perspective}")
+            print(f"  - Perspective Index: {perspective_index}")
+            print(f"  - Number of sets: {num_sets}")
+            print(f"  - PDF Files: {[f.name for f in pdf_files]}")
+        
         topic_sets = []
         
         for set_index in range(num_sets):
-            print(f"  → Generating set {set_index + 1}/{num_sets}")
+            if self.debug:
+                print(f"\n  - Generating set {set_index + 1}/{num_sets}")
+            
             result = self._generate_single_set(
                 pdf_files=pdf_files,
                 perspective=perspective,
                 perspective_index=perspective_index,
                 set_index=set_index
             )
+            
             if result:
+                if self.debug:
+                    print(f"    ✔️ Set {set_index + 1} generated successfully")
+                    print(f"    - Content length: {len(result)}")
                 topic_sets.append(result)
+            else:
+                if self.debug:
+                    print(f"    ❌ Failed to generate set {set_index + 1}")
+        
+        if self.debug:
+            print(f"\n  - Total sets generated: {len(topic_sets)}/{num_sets}")
         
         if not topic_sets:
             raise Exception(f"Failed to generate any valid topic sets for perspective {perspective_index+1}")
@@ -117,6 +141,11 @@ class TopicGenerator:
         set_index: int
     ) -> Optional[str]:
         """Generate a single set of topics using the task chain."""
+        if self.debug:
+            print(f"\n🔍 DEBUG: Starting _generate_single_set")
+            print(f"  - Set Index: {set_index}")
+            print(f"  - Creating chain for perspective {perspective_index + 1}")
+        
         chain = TaskChain(self.processor, self.tasks_config, [
             ChainStep(
                 name=f"Generate Topics Set {set_index+1} for Perspective {perspective_index+1}",
@@ -129,9 +158,18 @@ class TopicGenerator:
         ])
         
         for attempt in range(3):
+            if self.debug:
+                print(f"  - Attempt {attempt + 1}/3")
+            
             result = chain.run(perspective)
-            if result and self._validate_json(result):
+            if result:
+                if self.debug:
+                    print(f"    ✔️ Generation successful")
+                    print(f"    - Result length: {len(result)}")
                 return result
+            
+            if self.debug:
+                print(f"    ⚠️ Attempt {attempt + 1} failed")
             print(f"⚠️ Retrying set {set_index+1} (attempt {attempt+1}/3)")
         return None
 
@@ -152,18 +190,37 @@ class TopicGenerator:
         num_consolidation_steps: int
     ) -> str:
         """Merge all perspectives and restructure based on existing directory structure."""
+        if self.debug:
+            print("\n🔍 DEBUG: Starting _process_and_restructure")
+            print(f"  - Number of perspectives: {len(perspective_results)}")
+            print(f"  - Consolidation steps: {num_consolidation_steps}")
+        
         print("\n🔄 Merging and restructuring topics...")
         
         # Merge all perspective results
+        if self.debug:
+            print("  - Starting perspective merge")
         merged_topics = self._merge_all_perspectives(perspective_results)
         
-        # Restructure based on existing directory structure
+        if self.debug:
+            print("  - Getting existing directories")
         existing_dirs = self._get_existing_directories(directory)
-        return self._restructure_topics(
+        
+        if self.debug:
+            print(f"  - Found {len(existing_dirs)} existing directories")
+            print("  - Starting topic restructuring")
+        
+        result = self._restructure_topics(
             merged_topics=merged_topics,
             existing_dirs=existing_dirs,
             num_steps=num_consolidation_steps
         )
+        
+        if self.debug:
+            print("  ✔️ Processing and restructuring complete")
+            print(f"  - Final result length: {len(result)}")
+        
+        return result
 
     def _merge_all_perspectives(self, perspective_results: List[str]) -> str:
         """Merge all perspective results into a single topic structure."""
@@ -197,10 +254,10 @@ class TopicGenerator:
                 stop_at="<!-- END -->"
             )
             for i in range(1, num_steps + 1)
-        ])
+        ], debug=self.debug)
         
         result = chain.run(merged_topics)
-        if not result or not self._validate_json(result):
+        if not result:
             raise Exception("Failed to restructure topics")
         return result
 
@@ -223,20 +280,33 @@ class TopicGenerator:
 
     def _merge_topic_contents(self, json_list: List[dict]) -> dict:
         """Merge multiple topic JSONs by combining topics and their sub-topics."""
+        if self.debug:
+            print("\n🔍 DEBUG: Starting _merge_topic_contents")
+            print(f"  - Number of JSONs to merge: {len(json_list)}")
+        
         topic_map = {}
         
         # Process each JSON document
-        for json_doc in json_list:
+        for i, json_doc in enumerate(json_list):
+            if self.debug:
+                print(f"  - Processing JSON {i + 1}/{len(json_list)}")
+                print(f"    - Topics in document: {len(json_doc.get('topics', []))}")
+            
             for topic_item in json_doc.get('topics', []):
                 topic = topic_item['topic']
                 sub_topics = set(topic_item.get('sub_topics', []))
                 
                 if topic in topic_map:
-                    # Merge sub-topics for existing topic
+                    if self.debug:
+                        print(f"    - Merging subtopics for existing topic: {topic[:50]}...")
                     topic_map[topic].update(sub_topics)
                 else:
-                    # Create new topic entry
+                    if self.debug:
+                        print(f"    - Creating new topic: {topic[:50]}...")
                     topic_map[topic] = sub_topics
+        
+        if self.debug:
+            print(f"  - Final number of unique topics: {len(topic_map)}")
         
         # Convert back to the required format
         merged_result = {

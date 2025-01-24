@@ -10,11 +10,12 @@ from .utils import retry_on_error
 class DirectoryProcessor:
     """Handles the processing of directories and their contents."""
     
-    def __init__(self, processor: TaskProcessor, tasks_config: dict, context: str):
+    def __init__(self, processor: TaskProcessor, tasks_config: dict, context: str, debug: bool = False):
         self.processor = processor
         self.tasks_config = tasks_config
-        self.topic_generator = TopicGenerator(processor, tasks_config)
-        self.topic_processor = TopicProcessor(processor, tasks_config, context)
+        self.topic_generator = TopicGenerator(processor, tasks_config, debug=debug)
+        self.topic_processor = TopicProcessor(processor, tasks_config, context, debug=debug)
+        self.debug = debug
 
     @retry_on_error(max_retries=3)
     def process_with_topics(
