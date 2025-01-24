@@ -257,8 +257,6 @@ class TopicProcessor:
             tasks=[
                 "cleanup_task",
                 "generate_logical_steps_task",
-                "generate_logical_steps_task",
-                "generate_logical_steps_task",
                 "generate_step_proofs_task",
                 "generate_examples_task",
                 "format_math_task",
