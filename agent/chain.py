@@ -162,10 +162,9 @@ class TaskChain:
     def _prepare_json_continuation_prompt(self, content: str) -> str:
         """Prepare prompt for continuing JSON structure."""
         return (
-            "Continue completing this JSON structure. Here's the partial JSON:\n\n"
-            f"{content}\n\n"
-            "Complete the JSON structure, ensuring it's valid.\n"
-            "Do not repeat any previous content, only provide the missing parts."
+            "Continue completing this JSON structure.\n"
+            "Do not repeat any previous content, only provide the missing parts.\n"
+            "Exactly from you left.\n"
         )
 
     def _prepare_text_continuation_prompt(self, last_chunk: str) -> str:
