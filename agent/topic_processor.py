@@ -22,7 +22,6 @@ class TopicProcessor:
         self.tasks_config = tasks_config
         self.context = context
         self.filename_handler = FilenameHandler(processor, tasks_config)
-        self.lock = threading.Lock()  # To manage concurrent access to shared resources
         self.debug = debug  # Store debug flag
 
     def process_section(
@@ -32,11 +31,10 @@ class TopicProcessor:
         section_topics: List[str],
         pdf_files: List[Path], 
         max_previous_topics: int = 5,
-        max_workers: int = 3,
         max_iterations: int = 3
     ) -> None:
         """
-        Process all topics within a section in parallel.
+        Process all topics within a section sequentially.
         
         Args:
             directory: Base directory for saving topics
@@ -44,24 +42,21 @@ class TopicProcessor:
             section_topics: List of topics to process
             pdf_files: List of PDF files to use as reference
             max_previous_topics: Maximum number of previous topics to use as context
-            max_workers: Maximum number of parallel threads
             max_iterations: Maximum number of iterations for task retries
         """
         if self.debug:
             print(f"\n🔵 DEBUG: Processing Section - {section_name}")
             print(f"Topics to process: {section_topics}")
             print(f"PDF Files: {[f.name for f in pdf_files]}")
-            print(f"Max Previous Topics: {max_previous_topics}")
-            print(f"Max Workers: {max_workers}\n")
+            print(f"Max Previous Topics: {max_previous_topics}\n")
         
         print(f"\nProcessing section: {section_name} ({len(section_topics)} topics)")
         
         processed_topics: List[TopicResult] = []
         
-        with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_to_topic = {
-                executor.submit(
-                    self._process_sub_topic,
+        for topic in section_topics:
+            try:
+                result = self._process_sub_topic(
                     directory,
                     section_name,
                     topic,
@@ -69,18 +64,11 @@ class TopicProcessor:
                     processed_topics,
                     max_previous_topics,
                     max_iterations
-                ): topic for topic in section_topics
-            }
-            
-            for future in as_completed(future_to_topic):
-                topic = future_to_topic[future]
-                try:
-                    result = future.result()
-                    if result and result.success:
-                        with self.lock:
-                            processed_topics.append(result)
-                except Exception as e:
-                    print(f"❌ Exception processing topic '{topic}': {str(e)}")
+                )
+                if result and result.success:
+                    processed_topics.append(result)
+            except Exception as e:
+                print(f"❌ Exception processing topic '{topic}': {str(e)}")
 
     def _process_sub_topic(
         self,
@@ -100,8 +88,7 @@ class TopicProcessor:
                 print(f"  - Section: {section_name}")
                 print(f"  - Previous topics count: {len(processed_topics)}")
             
-            with self.lock:
-                current_processed = processed_topics[-max_previous_topics:] if max_previous_topics else processed_topics.copy()
+            current_processed = processed_topics[-max_previous_topics:] if max_previous_topics else processed_topics.copy()
             
             if self.debug:
                 print(f"  - Using {len(current_processed)} previous topics for context")
@@ -209,7 +196,8 @@ class TopicProcessor:
                     print(f"\n  - Attempt {iterations + 1}/{max_iterations}")
                 
                 if not chain:
-                    chain = self._create_processing_chain(pdf_files, self._build_previous_topics_context(previous_topics, max_previous_topics))
+                    context = self._build_previous_topics_context(previous_topics, max_previous_topics)
+                    chain = self._create_processing_chain(pdf_files, context)
                 
                 input_text = self._build_input_text(directory, section_name, topic)
                 content = chain.run(input_text)
