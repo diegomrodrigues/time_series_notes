@@ -261,7 +261,7 @@ class TaskChain:
             print("\n" + "═" * 50)
             print(f"🔍 DEBUG: Task Result (Iteration {iteration + 1})")
             print(f"Step: {step.name}")
-            print(f"Raw Result:\n{result}")
+            print(f"Raw Result:\n{result[:500]}")
             print("═" * 50 + "\n")
         
         if iteration > 0:
@@ -272,7 +272,7 @@ class TaskChain:
         else:
             current_content = result
             
-        if step.expect_json:
+        if step.expect_json or step.extract_json:
             try:
                 json.loads(current_content)
                 last_valid_json = current_content
