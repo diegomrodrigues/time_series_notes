@@ -105,8 +105,12 @@ class TaskProcessor:
                 print("  - Sending message to model...")
             
             response = chat.send_message(user_content)
+
+            if self.debug:
+                print(response)
+
             result = self._handle_response(response, task_name)
-            
+
             if self.debug:
                 print(f"  - Response received: {bool(result)}")
                 if result:
@@ -157,7 +161,7 @@ class TaskProcessor:
     
     def _handle_response(self, response: Any, task_name: str) -> Optional[str]:
         """Handle the model's response."""
-        return response.text
+        return response
  
     def _extract_json(self, text: str) -> Optional[str]:
         """Extract JSON from text response using multiple fallback strategies."""
