@@ -126,18 +126,64 @@ class TaskProcessor:
         return None
 
     def _extract_json(self, text: str) -> Optional[str]:
-        """Extract JSON from text response more robustly."""
-        try:
-            # Use regex to find JSON within a ```json code block
-            json_block = re.search(r"```json\s*(\{.*?\})\s*```", text, re.DOTALL)
-            if not json_block:
-                print("⚠️ JSON code block not found in response")
-                return None
+        """
+        Extract JSON from text response using multiple fallback strategies.
+        Returns the first valid JSON found or None if no valid JSON is found.
+        """
+        # Strategy 1: Look for ```json blocks
+        json_block = re.search(r"```(?:json)?[\s\n]*(\{.*?\})[\s\n]*```", text, re.DOTALL | re.IGNORECASE)
+        if json_block:
+            try:
+                json_str = json_block.group(1)
+                json.loads(json_str)  # Validate JSON
+                return json_str
+            except json.JSONDecodeError:
+                print("⚠️ Found JSON block but failed to parse")
+        
+        # Strategy 2: Look for any code blocks containing JSON
+        code_blocks = re.finditer(r"```[\s\S]*?([\s\S]*?)```", text)
+        for block in code_blocks:
+            try:
+                content = block.group(1).strip()
+                if content.startswith('{') and content.endswith('}'):
+                    json.loads(content)  # Validate JSON
+                    return content
+            except json.JSONDecodeError:
+                continue
+        
+        # Strategy 3: Look for raw JSON objects in text using naive extraction
+        i = 0
+        length = len(text)
+        
+        while i < length:
+            char = text[i]
             
-            json_str = json_block.group(1)
-            # Validate JSON
-            json.loads(json_str)
-            return json_str
-        except json.JSONDecodeError as e:
-            print(f"⚠️ Failed to decode JSON: {e}")
-            return None
+            if char in ['{', '[']:
+                start_char = char
+                end_char = '}' if char == '{' else ']'
+                
+                nesting = 1
+                j = i + 1
+                
+                # Track nesting levels until finding matching close bracket/brace
+                while j < length and nesting > 0:
+                    if text[j] == start_char:
+                        nesting += 1
+                    elif text[j] == end_char:
+                        nesting -= 1
+                    j += 1
+                
+                if nesting == 0:  # Found complete JSON structure
+                    candidate = text[i:j]
+                    try:
+                        json.loads(candidate)  # Validate JSON
+                        return candidate
+                    except json.JSONDecodeError:
+                        pass
+                
+                i = j  # Skip to end of current structure
+            else:
+                i += 1
+        
+        print("⚠️ No valid JSON found in response")
+        return None
