@@ -135,18 +135,15 @@ class TaskChain:
             print(f"  - Uploaded files: {len(uploaded_files)}")
         
         current_content = content
-        iterations = 0
         last_valid_json = None
         
-        while iterations < step.max_iterations:
+        for i, task_name in enumerate(step.tasks):
             if self.debug:
-                print(f"\n  - Starting iteration {iterations + 1}/{step.max_iterations}")
+                print(f"\n    - Starting task: {i+1}/{len(step.tasks)} {task_name}")
             
-            for task_name in step.tasks:
-                if self.debug:
-                    print(f"    - Executing task: {task_name}")
-                
-                print(f"\n→ Executing task ({iterations + 1}/{step.max_iterations}): {task_name}")
+            iterations = 0
+            while iterations < step.max_iterations:
+                print(f"\n→ Executing task {task_name} ({iterations + 1}/{step.max_iterations})")
                 
                 task_config = self._prepare_task_config(task_name, step, current_content, iterations)
                 result = self._execute_task(task_name, task_config, current_content, step, uploaded_files, last_valid_json)
@@ -160,26 +157,20 @@ class TaskChain:
                     print(f"    ✔️ Task execution successful")
                     print(f"    - Result length: {len(result)}")
                 
-                current_content, last_valid_json, should_stop = self._process_task_result(
-                    result, current_content, step, iterations, last_valid_json, task_name
+                current_content, last_valid_json = self._process_task_result(
+                    result, current_content, step, iterations, last_valid_json
                 )
                 
-                if should_stop:
+                if self._should_stop_iteration(current_content, step, last_valid_json):
                     if self.debug:
-                        print("    - Stop condition met")
+                        print("    - Task iteration stop condition met")
                     break
-            
-            if self._should_stop_iteration(current_content, step, last_valid_json):
-                if self.debug:
-                    print("  - Iteration stop condition met")
-                break
                 
-            iterations += 1
+                iterations += 1
         
         if self.debug:
             print("\n  ✔️ Step processing completed")
             print(f"  - Final content length: {len(current_content)}")
-            print(f"  - Total iterations: {iterations}")
         
         self.previous_result = current_content
         return current_content
@@ -253,7 +244,7 @@ class TaskChain:
             return None
 
     def _process_task_result(self, result: str, current_content: str, step: ChainStep, 
-                           iteration: int, last_valid_json: Optional[str], task_name: str) -> tuple[str, Optional[str], bool]:
+                           iteration: int, last_valid_json: Optional[str]) -> tuple[str, Optional[str]]:
         """Process task result and handle JSON/text content appropriately."""
         should_stop = False
         
@@ -261,7 +252,7 @@ class TaskChain:
             print("\n" + "═" * 50)
             print(f"🔍 DEBUG: Task Result (Iteration {iteration + 1})")
             print(f"Step: {step.name}")
-            print(f"Raw Result:\n{result[:500]}")
+            print(f"Raw Result:\n{result[:1000]}")
             print("═" * 50 + "\n")
         
         if iteration > 0:
@@ -277,14 +268,10 @@ class TaskChain:
                 json.loads(current_content)
                 last_valid_json = current_content
                 # Only stop if we have valid JSON and this is the last task
-                should_stop = task_name == step.tasks[-1]
             except json.JSONDecodeError:
-                should_stop = False
-        elif step.stop_at and step.stop_at in current_content:
-            # Only stop if we hit the stop marker and this is the last task
-            should_stop = task_name == step.tasks[-1]
-                
-        return current_content, last_valid_json, should_stop
+                last_valid_json = None
+
+        return current_content, last_valid_json
 
     def _should_stop_iteration(self, content: str, step: ChainStep, last_valid_json: Optional[str]) -> bool:
         """Determine if iteration should stop based on content and step configuration."""
