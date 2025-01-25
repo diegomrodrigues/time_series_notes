@@ -18,7 +18,9 @@ TARGET_FOLDERS = []
 EXCLUDED_FOLDERS = [
     "01. Differential Equations",
     "02. Lag Operators",
-    "03. Linear Regression Models"
+    "03. Linear Regression Models",
+    "04. Linear System of Eq",
+    "05. Stationary ARMA"
 ]
 
 # Processing parameters
