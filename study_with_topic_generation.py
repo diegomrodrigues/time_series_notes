@@ -4,8 +4,9 @@ import yaml
 from agent.processor import TaskProcessor
 from agent.directory_processor import DirectoryProcessor
 import argparse
+from dotenv import load_dotenv
 
-BASE_DIR = "/content/time_series_notes"
+BASE_DIR = "./"
 
 CONTEXT = "Advanced Study of Time Series Analysis and Mathematics"
 PERSPECTIVES = [
@@ -36,7 +37,7 @@ def load_tasks_config(tasks_dir: str = './agent/tasks') -> dict:
     tasks_path = Path(tasks_dir)
     
     for yaml_file in tasks_path.glob('*.yaml'):
-        with open(yaml_file, 'r') as f:
+        with open(yaml_file, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
             tasks_config.update(config)
     
@@ -60,6 +61,9 @@ def get_numbered_folders(base_dir: Path) -> list[str]:
     return sorted(folders)
 
 def main():
+    # Load environment variables from .env file
+    load_dotenv()
+    
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Process study materials with topic generation')
     parser.add_argument('--debug', type=lambda x: x.lower() == 'true', default=False,
