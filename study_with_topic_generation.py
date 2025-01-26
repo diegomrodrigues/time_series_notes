@@ -16,8 +16,7 @@ PERSPECTIVES = [
 ]
 
 TARGET_FOLDERS = [
-    "13. Forecasting",
-    "08. Deterministic Time Trends"
+    "13. Forecasting"
 ]
 EXCLUDED_FOLDERS = [
     "01. Differential Equations",
