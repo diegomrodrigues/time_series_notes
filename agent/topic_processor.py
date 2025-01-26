@@ -158,8 +158,7 @@ class TopicProcessor:
             if not content:
                 return None
 
-            success = self._save_topic_content(directory, section_name, topic, content)
-            return TopicResult(topic=topic, content=content, success=success)
+            return TopicResult(topic=topic, content=content, success=True)
 
         except Exception as e:
             if self.debug:
@@ -297,11 +296,7 @@ class TopicProcessor:
         try:
             section_dir = self.filename_handler.create_section_directory(directory, section_name)
             result = self.filename_handler.generate_filename(section_dir, topic)
-            
-            if result.exists:
-                print(f"⚠️ Similar topic already exists: {result.filename}")
-                return True
-            
+                        
             result.path.write_text(content, encoding='utf-8')
             print(f"✔️ Saved topic to: {result.filename}")
             return True

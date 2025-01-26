@@ -16,7 +16,9 @@ PERSPECTIVES = [
 ]
 
 TARGET_FOLDERS = [
-    "13. Forecasting"
+    "13. Forecasting",
+    "14. Maximum Likelihood Est",
+    "09. Models of Nonstationary Time Series"
 ]
 EXCLUDED_FOLDERS = [
     "01. Differential Equations",
