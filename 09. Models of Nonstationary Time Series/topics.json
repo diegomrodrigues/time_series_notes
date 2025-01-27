@@ -1,0 +1,440 @@
+{
+  "topics": [
+    {
+      "topic": "Transformações e Implicações Estatísticas",
+      "sub_topics": [
+        "A aplicação da diferenciação em um processo estacionário por tendência introduz uma raiz unitária, criando um processo não invertível, ao passo que processos com raiz unitária necessitam dessa operação.",
+        "Em amostras finitas, é impossível distinguir entre um processo de raiz unitária e um processo estacionário que possui um autovalor próximo de 1. A função de verossimilhança condicional para um processo gaussiano é contínua em relação a λ_1.",
+        "Para um processo de raiz unitária (1 - L)y_t = δ + ψ(L)ε_t, a função geradora de autocovariância é g_Δy(z) = ψ(z)σ^2ψ(z⁻¹). O espectro da população de Δy é S_Δy(ω) = (1/2π)g_Δy(e^{-iω}). Se avaliado em z=1, o espectro de potência é positivo.",
+        "Para um processo de raiz unitária y_t = α + δt + u_t, subtrair a tendência linear não resulta em uma série estacionária, uma vez que a variância do termo de erro u_t cresce com o tempo.",
+        "Se uma série temporal é estacionária por tendência, subtrai-se a tendência determinística (α + δt) para obter uma representação estacionária; se ela possui raiz unitária, subtrair a tendência não produz estacionariedade. A diferenciação é necessária para obter estacionaridade.",
+        "Um processo de raiz unitária também pode ser expresso em termos de seu espectro de potência em frequência zero, que é positivo. Para um processo estacionário por tendência, o espectro da população em frequência zero é igual a zero."
+      ]
+    },
+    {
+      "topic": "Testes de Raiz Unitária e Abordagens Alternativas",
+      "sub_topics": [
+        "A decisão de impor ou não uma raiz unitária em uma autorregressão envolve uma compensação entre eficiência e consistência. Estimar o modelo com e sem a imposição da raiz unitária pode fornecer insights sobre a robustez dos resultados.",
+        "A função (1 - z)^(-d)  possui derivadas com respeito a z, e possui uma expansão em série de potência ao redor de z = 0, dada por (1-z)^(-d) = 1 + dz + 1/2!(d+1)dz^2 + ...",
+        "A hipótese de que uma série temporal possui uma raiz unitária não é refutável em amostras finitas devido à semelhança de suas implicações com modelos estacionários, sendo possível apenas medir sua persistência em um intervalo finito de tempo.",
+        "Modelos integrados fracionariamente (1 - L)^d y_t = ψ(L)ε_t, onde d não é um inteiro, podem ser usados para modelar memórias longas, onde os coeficientes de resposta a impulsos decaem mais lentamente do que em modelos ARMA.",
+        "O modelo de série temporal y_t = (1 - L)^(-d)ε_t = h_0ε_t + h_1ε_{t-1} + h_2ε_{t-2} + ..., descreve uma representação MA(∞), com coeficientes de resposta a impulsos h_j que se comportam como (j+1)^(d-1) para j grande.",
+        "Ocasionalmente, quebras na tendência também podem afetar a série temporal, onde y_t possui comportamentos distintos antes e depois de um determinado ponto de quebra To, ou um shift na inclinação linear.",
+        "Para modelos integrados fracionariamente, a sequência {h_j} é quadrado-somável se d < 1/2. Para d > 1/2, diferencia-se o processo antes da análise.",
+        "Restringir a análise a um modelo autorregressivo de ordem fixa permite testar hipóteses como φ = 1 em um modelo AR(1), embora modelos mais parsimoniosos sejam melhores e mais fáceis de estimar."
+      ]
+    },
+    {
+      "topic": "Representações de Modelos de Séries Temporais",
+      "sub_topics": [
+        "A condição de estacionariedade é dada por Σᵢ|ψᵢ| < ∞, com as raízes de ψ(z) = 0 fora do círculo unitário. Isso assegura a convergência do processo e a estabilidade das suas propriedades estatísticas ao longo do tempo.",
+        "A representação de um processo não estacionário pode incluir uma tendência determinística. Um modelo de tendência linear é dado por yₜ = α + δt + ψ(L)εₜ, onde a média μ é substituída por uma função linear do tempo α + δt. Este modelo é chamado de estacionário em tendência. A remoção da tendência linear transforma o processo em um estacionário.",
+        "Modelos de séries temporais podem ser expressos utilizando o operador de defasagem L. A representação yₜ = μ + εₜ + ψ₁εₜ₋₁ + ψ₂εₜ₋₂ + ... = μ + ψ(L)εₜ descreve um processo estacionário, onde μ é a média e {εₜ} é um ruído branco com média zero e variância σ²."
+      ]
+    },
+    {
+      "topic": "Processos de Raiz Unitária",
+      "sub_topics": [
+        "A diferença primeira Δyₜ remove a não estacionariedade na média, transformando o processo em um estacionário. Um exemplo é o passeio aleatório com deriva, onde yₜ = yₜ₋₁ + δ + εₜ, obtido ao definir ψ(L) = 1 no modelo de raiz unitária.",
+        "A especificação de raiz unitária é expressa como (1 - L)yₜ = δ + ψ(L)εₜ. O operador de diferença (1 - L) é denotado por Δ, então Δyₜ = yₜ - yₜ₋₁.",
+        "O operador de diferença Δ é crucial na análise de processos de raiz unitária, uma vez que transforma séries temporais não estacionárias em séries com propriedades estatísticas mais tratáveis. Essa transformação permite que ferramentas estatísticas projetadas para processos estacionários sejam aplicadas."
+      ]
+    },
+    {
+      "topic": "Representações Alternativas de Processos com Raiz Unitária",
+      "sub_topics": [
+        "A fatoração do operador autoregressivo permite decompor as raízes de um processo. Se todas as raízes λ₁, λ₂, ..., λₚ estão dentro do círculo unitário (|λᵢ| < 1), o processo é estacionário em torno da tendência. Se uma das raízes λ₁ = 1, o processo possui uma raiz unitária e é não estacionário. ",
+        "O processo (1 - L)(1 - λ₂L)(1 - λ₃L)...(1 - λₚL)uₜ = (1 + θ₁L + θ₂L² + ... + θqLq)εₜ implica (1 - L)uₜ = (1 + θ₁L + θ₂L² + ... + θqLq)εₜ / ((1 - λ₂L)(1 - λ₃L)...(1 - λₚL)) = ψ*(L)εₜ, que também é não estacionário.",
+        "Processos com raiz unitária podem ser expressos na forma yₜ = α + δt + uₜ onde uₜ segue um processo ARMA com média zero, detalhado por (1 - φ₁L - φ₂L² - ... - φₚLᵖ)uₜ = (1 + θ₁L + θ₂L² + ... + θqLq)εₜ. Os operadores de média móvel (1 + θ₁L + θ₂L² + ... + θqLq) são invertíveis."
+      ]
+    },
+    {
+      "topic": "Tendências Lineares e Raízes Unitárias",
+      "sub_topics": [
+        "A diferença primeira da série logarítmica, (1 - L)log(yₜ) = log(yₜ/yₜ₋₁) ≈ (yₜ - yₜ₋₁) / yₜ₋₁, representa a taxa de variação percentual da série. A modelagem dos logs de uma série temporal sugere que a taxa de crescimento é um processo estocástico estacionário.",
+        "A primeira diferença do log de uma variável se aproxima da variação percentual na variável: (1 - L)log(yₜ) ≈ (yₜ - yₜ₋₁) / yₜ₋₁. Essa aproximação é útil quando se aplica o conceito de raiz unitária.",
+        "A tendência linear (δt) em modelos estacionários de tendência é uma especificação para modelar séries temporais com crescimento constante ao longo do tempo, podendo ser substituída por formas funcionais não lineares como quadráticas (δt + γt²) ou exponenciais (eᵟᵗ), dependendo das características do crescimento da série temporal.",
+        "Dados transformados utilizando logaritmos podem ser modelados com processos de raiz unitária, onde o pressuposto é que a taxa de crescimento da série é um processo estocástico estacionário. Isso justifica a utilização de logs antes da aplicação de modelos de raiz unitária.",
+        "Em vez de uma função linear, algumas séries temporais podem ser melhor descritas por uma tendência exponencial. A transformação logarítmica é utilizada para linearizar uma tendência exponencial (log(yt) = δt).",
+        "Modelos de tendência linear como yₜ = eᵟᵗ são usados para representar crescimento exponencial em séries temporais. A transformação logarítmica, log(yₜ) = δt, converte o crescimento exponencial em linear, facilitando a análise com os modelos lineares clássicos.",
+        "O logaritmo natural de uma tendência exponencial resulta em uma tendência linear (log(yₜ) = δt), por isso é comum usar logaritmos dos dados antes de aplicar modelos de tendência linear ou raiz unitária.",
+        "O operador de primeira diferença (1 - L) aplicado ao logaritmo de uma variável (1 - L)log(yₜ) representa aproximadamente a variação percentual da variável, justificando o uso de logaritmos antes de aplicar modelos de raiz unitária.",
+        "O uso de logaritmos e diferenças logarítmicas permitem tratar modelos de raiz unitária como modelos de crescimento percentual estacionário, unindo as ferramentas de análise de séries estacionárias e modelos não estacionários.",
+        "Um processo de raiz unitária representa um processo em que a série original não é estacionária, mas as mudanças na série (por exemplo, primeira diferença) são estacionárias."
+      ]
+    },
+    {
+      "topic": "Previsão em Processos Estacionários e Não Estacionários",
+      "sub_topics": [
+        "A previsão em processos de raiz unitária, como Δyₜ, é feita usando a fórmula padrão para processos estacionários. A série original yₜ é então reconstruída pela soma cumulativa das mudanças previstas. O nível da variável em t+s é yₜ₊ₛ = ΣᵢΔyₜ₊ᵢ + yₜ. Essa soma inclui todos os intervalos de tempo até o momento da previsão.",
+        "Em processos não estacionários com tendência determinística, a previsão envolve a adição da tendência linear à previsão do componente estocástico, ŷₜ₊ₛ|ₜ = α + δ(t + s) + ψₛεₜ + ψₛ₊₁εₜ₋₁ + ψₛ₊₂εₜ₋₂ + ....  A tendência linear é calculada e adicionada ao modelo estacionário.",
+        "Para processos estacionários, a projeção linear de yₜ₊ₛ em um conjunto de variáveis passadas yₜ, yₜ₋₁, ... é denotada por ŷₜ₊ₛ|ₜ.  Essa projeção converge para a média incondicional da série, demonstrando a estabilidade da previsão no longo prazo."
+      ]
+    },
+    {
+      "topic": "Erros de Previsão e Análise da sua Variância",
+      "sub_topics": [
+        "A expressão ŷₜ₊₁|ₜ = (1 + θ)Σₖ(-θ)ᵏyₜ₋ₖ descreve a previsão adaptativa, onde as previsões futuras são formadas com uma ponderação exponencial de valores passados. Essas expectativas adaptativas são racionais apenas se a série yₜ seguir um processo ARIMA(0,1,1).",
+        "A variância do erro de previsão, E[(yₜ₊ₛ - ŷₜ₊ₛ|ₜ)²], para um processo estacionário, converge para a variância incondicional do componente estacionário, ψ(L)εₜ. Para um processo de raiz unitária, essa variância cresce linearmente com o horizonte de previsão s. Isso demonstra que os erros de previsão crescem com o tempo para processos não estacionários com raiz unitária.",
+        "O erro de previsão de um passo à frente é definido como εₜ = yₜ - ŷₜ|ₜ₋₁. Para um processo ARIMA(0,1,1), ŷₜ₊₁|ₜ = (1 + θ)yₜ - θyₜ₋₁ . Isso relaciona o valor previsto a seu valor passado e uma ponderação da diferença entre os dois."
+      ]
+    },
+    {
+      "topic": "Multiplicadores Dinâmicos e Persistência de Inovações",
+      "sub_topics": [
+        "Em contraste, para um processo de raiz unitária, o multiplicador dinâmico converge para ψ(1), indicando que o impacto da inovação é permanente. Isso é um resultado importante, já que inovações em processos de raiz unitária têm um efeito duradouro, alterando permanentemente o nível da série.",
+        "O multiplicador da mudança entre yₜ₊ₛ e yₜ₊ₛ₋₁, que é (∂Δyₜ₊ₛ/∂εₜ) = ψₛ, descreve a influência de uma inovação na mudança entre os períodos. Em processos estacionários, as inovações têm efeitos transitórios. Em processos de raiz unitária, as inovações têm efeitos persistentes no nível da série.",
+        "O multiplicador dinâmico (∂yₜ₊ₛ/∂εₜ) mede o impacto de uma inovação εₜ em yₜ₊ₛ. Para um processo estacionário, este impacto diminui com o tempo, convergindo para zero.  Isso reflete a natureza transitória dos impactos em processos estacionários."
+      ]
+    },
+    {
+      "topic": "Transformações para Atingir a Estacionariedade",
+      "sub_topics": [
+        "A diferenciação de um processo estacionário por tendência introduz um componente de raiz unitária na representação de média móvel, tornando-o não invertível e potencialmente problemático. Isso ilustra o cuidado necessário ao escolher as transformações apropriadas, tanto em modelos com tendência determinística quanto em modelos de raiz unitária.",
+        "Para processos estacionários com tendência, a remoção da tendência determinística (subtração de δt) produz uma série estacionária. Isso se alinha com a definição de processos estacionários em torno da tendência.",
+        "Para um processo de raiz unitária, a diferenciação (aplicar o operador (1 - L)) produz uma série estacionária. Isso remove a não estacionariedade na média, mas não a tendência na variância, que cresce ao longo do tempo. Subtrair uma tendência de um processo de raiz unitária resulta em um processo não estacionário."
+      ]
+    },
+    {
+      "topic": "Testes de Raiz Unitária e suas Implicações",
+      "sub_topics": [
+        "A função de verossimilhança condicional para um processo gaussiano é contínua no parâmetro λ₁. Para qualquer amostra finita T, existem especificações estacionárias com λ₁ < 1, cujas implicações observáveis são quase idênticas às de um processo com raiz unitária λ₁ = 1. Isso dificulta a distinção entre esses processos em amostras finitas.",
+        "O teste de raiz unitária é uma forma de verificar se a série tem comportamento não estacionário. Se o valor de λ₁ é 1, a série é considerada não estacionária, e se λ₁ < 1, a série é considerada estacionária. No entanto, na prática, é difícil discriminar estatisticamente esses casos.",
+        "Testes de raiz unitária visam determinar se uma série temporal possui ou não uma raiz unitária. No entanto, em amostras finitas, existe uma equivalência observacional entre processos de raiz unitária e processos estacionários com uma raiz próxima da unidade."
+      ]
+    },
+    {
+      "topic": "Abordagens Alternativas para Modelar Séries Temporais com Tendência",
+      "sub_topics": [
+        "A modelagem com quebras ocasionais podem ser analisadas como um processo de raiz unitária com inovações não gaussianas. A ocorrência de quebras é modelada como um processo estocástico com uma distribuição de probabilidade específica, adicionando uma camada de complexidade na modelagem.",
+        "Modelos de integração fracionária permitem que o parâmetro de integração d seja um número não inteiro. Isso generaliza modelos ARIMA para comportamentos de memória longa, onde os coeficientes de resposta a impulsos decaem mais lentamente do que em modelos ARMA.",
+        "Modelos de quebra estrutural incorporam mudanças ocasionais na tendência ao longo do tempo. Esses modelos assumem que a série é estacionária em torno de uma tendência que pode mudar em certos momentos. Os eventos que causam essas mudanças têm efeitos permanentes no nível da série."
+      ]
+    },
+    {
+      "topic": "Introdução à Modelagem de Séries Temporais",
+      "sub_topics": [
+        "Duas abordagens para modelar tendências incluem a inclusão de uma tendência determinística (y_t = α + δt + ψ(L)ε_t) e modelagem como um processo de raiz unitária ((1 - L)y_t = δ + ψ(L)ε_t).",
+        "Em séries estacionárias, a esperança incondicional E(y_t) = μ é constante e independente do tempo. Além disso, o forecast da série para o futuro converge para essa média incondicional conforme o horizonte aumenta.",
+        "Modelos de séries temporais univariadas podem ser expressos na forma y_t = μ + ε_t + ψ_1ε_{t-1} + ψ_2ε_{t-2} + ... = μ + ψ(L)ε_t, onde ε_t é um ruído branco com média zero e variância σ², e ψ(L) é um polinômio de defasagem.",
+        "Séries econômicas e financeiras frequentemente exibem tendências, o que as torna não estacionárias. Essas tendências precisam ser consideradas em previsões."
+      ]
+    },
+    {
+      "topic": "Tendências Determinísticas e Processos de Raiz Unitária",
+      "sub_topics": [
+        "A definição de raiz unitária assume que ψ(1) ≠ 0, onde ψ(z) é um polinômio, garantindo que a série original não seja estacionária. Se a série original fosse estacionária, sua primeira diferença resultaria em um operador de média móvel com ψ(1) = 0.",
+        "O operador de primeira diferença (1 - L), denotado por Δ, é frequentemente usado em processos de raiz unitária, com a definição Δy_t = y_t - y_{t-1}.",
+        "Um exemplo prototípico de um processo de raiz unitária é o passeio aleatório com drift, definido como y_t = y_{t-1} + δ + ε_t.",
+        "Um processo de raiz unitária especifica que a primeira diferença da série, em vez da série original, segue um processo estacionário, capturando a não estacionariedade através da diferenciação.",
+        "Uma tendência determinística linear (α + δt) substitui a média constante μ de um processo estacionário. Um processo com tendência é chamado trend-stationary, pois após a remoção da tendência, o resíduo é estacionário."
+      ]
+    },
+    {
+      "topic": "Especificações de Raiz Unitária e Integração",
+      "sub_topics": [
+        "A forma autorregressiva de um processo ARMA pode ser fatorada em termos de raízes, (1 - λ_1L)(1 - λ_2L)...(1 - λ_pL). Se todas as raízes λ_i estiverem dentro do círculo unitário, o processo é um caso especial de um processo trend-stationary.",
+        "Se um processo possui duas raízes iguais a 1, sua segunda diferença deve ser tomada para torná-lo estacionário, e é denotado por y_t ~ I(2).",
+        "Um processo geral com p lags autorregressivos, d integrações e q lags de média móvel é denominado ARIMA(p, d, q). Tomar a d-ésima diferença de um ARIMA(p, d, q) produz um processo estacionário ARMA(p, q).",
+        "Um processo é chamado integrado de ordem 1, denotado por y_t ~ I(1), quando sua primeira diferença é estacionária. Isso corresponde à raiz unitária.",
+        "Uma especificação de raiz unitária pode ser expressa como y_t = α + δt + u_t, onde u_t segue um processo ARMA com média zero."
+      ]
+    },
+    {
+      "topic": "Transformações Logarítmicas e Justificativas para Processos de Raiz Unitária",
+      "sub_topics": [
+        "A mesma lógica utilizada para séries com tendência determinística se aplica a séries modeladas como processos de raiz unitária, justificando a utilização de logs.",
+        "Ao trabalhar com séries que exibem crescimento exponencial, como o produto nacional bruto (PNB), é comum tomar o logaritmo natural dos dados antes de modelá-los, transformando o crescimento exponencial em uma tendência linear.",
+        "Para pequenas mudanças, a primeira diferença do log de uma variável se aproxima de sua variação percentual, permitindo que a modelagem da taxa de crescimento seja tratada como um processo estacionário."
+      ]
+    },
+    {
+      "topic": "Comparação entre Processos Trend-Stationary e de Raiz Unitária",
+      "sub_topics": [
+        "A projeção linear em processos trend-stationary converge em média quadrática para a tendência linear. Enquanto, para o processo de raiz unitária, as previsões são expressas em termos de mudanças e os níveis previstos acumulam essas mudanças.",
+        "Para um processo de raiz unitária, o nível da variável no tempo t+s é a soma das mudanças anteriores: y_{t+s} = Δy_{t+s} + Δy_{t+s-1} + ... + Δy_{t+1} + y_t. Ao projetar essas mudanças, temos a previsão.  ",
+        "Para uma série trend-stationary, a previsão adiciona um componente determinístico à previsão da parte estocástica: ŷ_{t+s|t} = α + δ(t + s) + ψε_t + ψ_{s+1}ε_{t-1} + ψ_{s+2}ε_{t-2} +...",
+        "Processos trend-stationary (15.1.2) e de raiz unitária (15.1.3) podem ser comparados em termos de previsão, variância do erro de previsão, multiplicadores dinâmicos e transformações necessárias para atingir a estacionariedade."
+      ]
+    },
+    {
+      "topic": "Previsões e Erros de Previsão",
+      "sub_topics": [
+        "A diferença entre modelos trend-stationary e raiz unitária é que, no primeiro, a variância dos erros de previsão converge para um valor finito conforme o horizonte aumenta, enquanto no segundo, essa variância continua crescendo.",
+        "A previsão de um processo trend-stationary converge para a linha de tendência com inclinação δ, onde o intercepto não muda com novas observações. Para um processo de raiz unitária, o intercepto muda a cada observação.",
+        "A variância do erro de previsão para um processo trend-stationary converge para um valor finito à medida que o horizonte aumenta. Para um processo de raiz unitária, ela cresce linearmente com o horizonte de previsão.",
+        "Em um modelo ARIMA(0, 1, 1), a previsão é dada por ŷ_{t+s|t} = sδ + y_t + θe_t. Nesses modelos, o nível atual da série (y_t) e a inovação atual (ε_t) são utilizados para prever crescimento futuro.",
+        "Em um processo de passeio aleatório com drift, a previsão é igual a  ŷ_{t+s|t} = sδ + y_t."
+      ]
+    },
+    {
+      "topic": "Multiplicadores Dinâmicos e Transformações para Estacionariedade",
+      "sub_topics": [
+        "A diferenciação remove a dependência no tempo da média de um processo de raiz unitária, mas não remove a dependência no tempo da variância.",
+        "Ao diferenciar um processo trend-stationary, um termo de raiz unitária é introduzido na representação da média móvel, tornando o processo não invertível.",
+        "Em um processo de raiz unitária, o efeito de uma inovação ε_t é permanente, com o limite do multiplicador dinâmico convergindo para ψ(1), o que captura o efeito cumulativo das inovações.",
+        "O efeito de uma inovação ε_t no valor futuro da série y_{t+s} é descrito pelo multiplicador dinâmico. Em um processo trend-stationary, os efeitos de uma inovação desaparecem ao longo do tempo, com o limite do multiplicador convergindo para 0.",
+        "Para tornar um processo trend-stationary estacionário, basta subtrair a tendência linear. Para um processo de raiz unitária, é necessário diferenciar a série."
+      ]
+    },
+    {
+      "topic": "Testes para Raízes Unitárias",
+      "sub_topics": [
+        "A avaliação de diferentes especificações AR(p) para testes de raiz unitária envolve a estimação de parâmetros e a comparação de modelos. A implementação computacional dessa avaliação requer algoritmos para a estimação dos parâmetros autorregressivos e métodos estatísticos para a comparação de modelos.",
+        "Ao testar uma raiz unitária, é importante ter em mente que, em amostras finitas, é difícil distinguir entre uma raiz unitária e uma raiz próxima de um. Isso porque uma especificação estacionária com raiz próxima de 1 pode se comportar de forma muito semelhante a uma raiz unitária.",
+        "O teste de hipóteses para raízes unitárias é difícil, pois tanto processos com raízes unitárias quanto processos estacionários podem se adequar igualmente aos dados em amostras finitas.",
+        "O teste de raiz unitária envolve um trade-off entre eficiência e consistência, isto é, restringir um modelo com raiz unitária aumenta a eficiência se a raiz unitária for verdadeira mas é inconsistente se a raiz unitária for falsa.",
+        "O tradeoff entre eficiência e consistência nos testes de raiz unitária implica escolhas computacionais sobre a imposição ou não de uma raiz unitária. Implementar modelos com e sem restrições de raiz unitária e comparar os resultados envolve uma análise computacional detalhada.",
+        "Os testes para raízes unitárias são implementados através de análise estatística computacional, onde hipóteses nulas e alternativas são formuladas para avaliar a presença de raízes unitárias. A implementação computacional desses testes envolve cálculos de estatísticas, avaliação de p-valores e decisão sobre rejeição ou não da hipótese nula.",
+        "Para a implementação eficiente de testes de raiz unitária, o uso de métodos de otimização numérica e computação paralela é essencial, especialmente quando os dados são extensos. A escolha de algoritmos de otimização eficientes pode reduzir significativamente o tempo de processamento.",
+        "Uma abordagem comum é impor restrições à classe de modelos (como modelos AR de baixa ordem) para tornar o teste mais tratável.",
+        "É recomendável estimar modelos com e sem restrições de raiz unitária e comparar as inferências para avaliar o impacto dessas escolhas."
+      ]
+    },
+    {
+      "topic": "Integração Fracionada e Quebras Ocasionais em Tendência",
+      "sub_topics": [
+        "A consideração de quebras ocasionais na tendência tem implicações em testes de raiz unitária, onde eventos ocasionais podem ser confundidos com processos de raiz unitária.",
+        "Em um processo integrado de ordem d, (1 - L)^d y_t = ψ(L)ε_t, onde d pode ser um valor não inteiro, permitindo modelar a memória longa em dados de séries temporais.",
+        "O operador (1 - L)^d pode ser expandido em uma série de potências, o que leva a coeficientes de resposta ao impulso que decaem mais lentamente do que em processos ARMA tradicionais.",
+        "Quebras ocasionais na tendência consideram que eventos raros podem alterar o nível da série, o que leva a não estacionariedade de maneira diferente de raízes unitárias e modelos com tendências lineares."
+      ]
+    },
+    {
+      "topic": "Introdução",
+      "sub_topics": [
+        "A expectativa incondicional de uma série temporal estacionária é constante ao longo do tempo, E(yₜ) = μ, e os forecasts convergem para essa média à medida que o horizonte de previsão aumenta.",
+        "Duas abordagens para descrever tendências: tendência determinística (yₜ = α + δt + ψ(L)εₜ) onde a média é função linear do tempo e processo de raiz unitária, (1 - L)yₜ = δ + ψ(L)εₜ, onde o operador de primeira diferença (1 - L) é usado para tornar a série estacionária.",
+        "Modelos de séries temporais univariadas são expressos como yₜ = μ + εₜ + ψ₁εₜ₋₁ + ψ₂εₜ₋₂ + ..., onde {εₜ} é um ruído branco com média zero e variância σ², e as raízes de ψ(z) = 0 estão fora do círculo unitário, garantindo estacionariedade.",
+        "Séries temporais econômicas e financeiras frequentemente exibem tendências de crescimento, necessitando de abordagens de modelagem que incorporem essas tendências para forecasts precisos."
+      ]
+    },
+    {
+      "topic": "Comparação entre Processos Estacionários de Tendência e Raiz Unitária",
+      "sub_topics": [
+        "A raiz unitária em um modelo é uma das raízes do polinômio autoregressivo igual a 1. Um processo pode ter uma ou mais raízes unitárias.",
+        "Em processos de raiz unitária, a mudança (Δyₜ) é um processo estacionário, o forecast do nível da variável é a soma das mudanças anteriores, levando o forecast a crescer linearmente com o horizonte, mas a interceptação da linha de forecast muda a cada nova observação da série temporal.",
+        "Processos estacionários de tendência e raiz unitária divergem nos forecasts, com o componente determinístico (α + δt) sendo adicionado ao forecast do componente estacionário em modelos de tendência estacionária, resultando em forecasts convergindo para essa tendência.",
+        "Um processo integrado de ordem 1 (I(1)) significa que a primeira diferença (Δyₜ) é estacionária, enquanto um processo integrado de ordem 2 (I(2)) requer duas diferenças ((1 - L)²yₜ) para se tornar estacionário. Um processo ARIMA(p, d, q) possui 'p' lags autoregressivos, ordem de integração 'd', e 'q' lags de média móvel."
+      ]
+    },
+    {
+      "topic": "Previsões",
+      "sub_topics": [
+        "Forecasts de processos de raiz unitária convergem para uma linha cujo intercepto muda com cada nova observação, enquanto forecasts para processos estacionários de tendência convergem para uma linha cujo intercepto é fixo, o que influencia a forma como a incerteza do forecast evolui no tempo.",
+        "O erro de previsão de um passo à frente (εₜ₊₁) em um processo ARIMA(0, 1, 1) é a diferença entre o valor observado e o forecast, e o modelo pode ser reescrito como ŷₜ₊₁|ₜ = (1 + θ)yₜ - θyₜ₋₁.",
+        "O forecast de um processo de raiz unitária (ŷₜ₊ₛ|ₜ) baseia-se na soma dos forecasts das mudanças (Δyₜ₊ᵢ) e depende da observação atual yₜ e do parâmetro δ, de forma que o forecast cresce linearmente com o horizonte.",
+        "O forecast de um processo estacionário de tendência (ŷₜ₊ₛ|ₜ) inclui um componente determinístico, (α + δ(t + s)), e o forecast do componente estocástico, sendo que este componente estocástico converge para zero à medida que o horizonte de previsão s aumenta."
+      ]
+    },
+    {
+      "topic": "Erros de Previsão",
+      "sub_topics": [
+        "A diferença fundamental nos processos de raiz unitária é que uma inovação εₜ tem um efeito permanente no nível da variável, capturado por (1+ψ₁+ψ₂+...+ψₛ) e, que não se dissipa ao longo do tempo, diferentemente dos processos estacionários de tendência.",
+        "O erro médio quadrático (MSE) para processos estacionários de tendência aumenta com o horizonte de forecast s, mas converge para um limite finito, determinado pela variância do componente estacionário, indicando que a incerteza não cresce indefinidamente.",
+        "Para processos de raiz unitária, o MSE cresce linearmente com o horizonte de forecast s e não converge para um valor fixo, indicando que a incerteza do forecast aumenta indefinidamente com o tempo, diferindo da forma como a incerteza evolui em modelos estacionários de tendência."
+      ]
+    },
+    {
+      "topic": "Transformações para Alcançar a Estacionariedade",
+      "sub_topics": [
+        "A autocovariância de uma série (1-L)yₜ em um modelo de raiz unitária avaliada em z=1 é não nula, contrastando com o mesmo cálculo em um modelo estacionário de tendência, que resulta em zero. Esta diferença está relacionada com a persistência das mudanças na série.",
+        "A diferenciação de uma série estacionária de tendência introduz uma raiz unitária no componente de média móvel, potencialmente levando a um processo não invertível, enquanto a remoção de tendência de um processo de raiz unitária não torna a série estacionária em variância.",
+        "O teste para raiz unitária é utilizado para determinar se as séries temporais são melhor descritas por um modelo de raiz unitária ou um modelo estacionário de tendência. No entanto, é crucial reconhecer que modelos de ambos os tipos podem explicar igualmente bem os dados, dependendo do tamanho da amostra.",
+        "Séries temporais com tendência determinística se tornam estacionárias ao subtrair a tendência (α + δt), enquanto séries com raiz unitária necessitam da diferenciação (Δyₜ = yₜ - yₜ₋₁) para remover a não estacionariedade."
+      ]
+    },
+    {
+      "topic": "Introduction",
+      "sub_topics": [
+        "Duas abordagens principais para modelar tendências são a inclusão de tendências determinísticas de tempo e o uso de processos de raiz unitária.",
+        "Modelos de séries temporais estacionárias são caracterizados por uma esperança incondicional constante e convergência da previsão para a média incondicional à medida que o horizonte de previsão aumenta.",
+        "Séries temporais não estacionárias, comuns em dados econômicos e financeiros, requerem abordagens de modelagem que incorporem tendências de longo prazo."
+      ]
+    },
+    {
+      "topic": "Deterministic Time Trend",
+      "sub_topics": [
+        "Ao remover a tendência linear de um processo trend-stationary, o restante do processo se torna estacionário.",
+        "O modelo com tendência determinística assume que a tendência pode ser expressa como uma função linear do tempo (α + δt) e a estacionariedade é alcançada após sua remoção.",
+        "Um processo trend-stationary substitui a média constante de um processo estacionário por uma função linear do tempo, permitindo que a série tenha uma tendência."
+      ]
+    },
+    {
+      "topic": "Unit Root Process",
+      "sub_topics": [
+        "O operador de primeira diferença (1 - L), denotado por Δ, é usado para tornar as séries temporais com raiz unitária estacionárias.",
+        "O processo com raiz unitária é definido com a restrição de que o polinômio característico, avaliado em z=1, seja diferente de zero, excluindo a possibilidade de que a série original seja estacionária.",
+        "Um exemplo prototípico é o passeio aleatório com drift, onde a série no tempo t é igual à série no tempo t-1, mais um drift (δ) e um erro aleatório.",
+        "Um processo de raiz unitária é caracterizado por um operador de diferença (1 - L) que torna a série estacionária."
+      ]
+    },
+    {
+      "topic": "Integrated Processes",
+      "sub_topics": [
+        "A diferenciação de ordem d de um processo ARIMA(p, d, q) resulta em um processo ARMA(p, q) estacionário.",
+        "Um processo ARIMA(p, d, q) generaliza esses conceitos, onde p e q são as ordens do componente autorregressivo e de média móvel e d é a ordem de integração.",
+        "Um processo é dito integrado de ordem 1 (I(1)) se sua primeira diferença for estacionária e de ordem 2 (I(2)) se sua segunda diferença for estacionária."
+      ]
+    },
+    {
+      "topic": "Linear vs. Exponential Trends",
+      "sub_topics": [
+        "Ao trabalhar com logs, a primeira diferença corresponde aproximadamente à mudança percentual na variável.",
+        "Em vez de uma tendência linear, muitos dados econômicos e financeiros exibem uma tendência exponencial.",
+        "Transformações logarítmicas são frequentemente usadas para converter tendências exponenciais em tendências lineares."
+      ]
+    },
+    {
+      "topic": "Comparison of Trend-Stationary and Unit Root Processes",
+      "sub_topics": [
+        "As previsões para um processo trend-stationary convergem para uma função linear determinística do tempo, enquanto as previsões para um processo unit root são baseadas em uma deriva e o valor atual da série.",
+        "Enquanto a variância do erro de previsão para o processo trend-stationary converge para uma constante, a variância do erro de previsão para um processo com raiz unitária cresce linearmente com o horizonte de previsão.",
+        "Processos trend-stationary e unit root são comparados em termos de previsões, variância do erro de previsão, multiplicadores dinâmicos e transformações necessárias para atingir a estacionariedade."
+      ]
+    },
+    {
+      "topic": "Forecasting",
+      "sub_topics": [
+        "O parâmetro de drift, δ, em um processo com raiz unitária tem um papel similar ao do parâmetro de tendência, δ, num processo trend-stationary.",
+        "Previsões para processos com raiz unitária são calculadas usando a fórmula padrão para processos estacionários, levando em consideração as mudanças na série temporal.",
+        "Previsões para processos trend-stationary adicionam o componente determinístico à previsão do componente estocástico estacionário.",
+        "Processos com raiz unitária crescem a uma taxa constante, e a variabilidade da previsão cresce também, mas mais lentamente."
+      ]
+    },
+    {
+      "topic": "Forecast Errors",
+      "sub_topics": [
+        "A variância do erro de previsão para processos trend-stationary converge para um limite finito, enquanto para processos com raiz unitária, a variância cresce linearmente com o horizonte de previsão.",
+        "Em processos ARIMA (0, 1, q), o valor atual e os q valores mais recentes do erro estocástico influenciam a previsão, com a série crescendo a uma taxa constante.",
+        "O erro de previsão de um passo à frente em um modelo ARIMA (0, 1, 1) pode ser interpretado como uma expectativa adaptativa ou suavização exponencial.",
+        "Para um processo trend-stationary, o erro de previsão é composto pelos termos de erro estocástico, enquanto para um processo de raiz unitária, o erro é uma função do passado da série temporal."
+      ]
+    },
+    {
+      "topic": "Dynamic Multipliers",
+      "sub_topics": [
+        "A persistência de inovações é outra diferença entre processos trend-stationary e processos de raiz unitária.",
+        "O efeito de um choque estocástico num processo de raiz unitária é capturado pelo somatório dos coeficientes de resposta de impulso.",
+        "Para processos trend-stationary, o efeito de um choque estocástico eventualmente desaparece, ao passo que em processos de raiz unitária esse efeito é permanente."
+      ]
+    },
+    {
+      "topic": "Transformations to Achieve Stationarity",
+      "sub_topics": [
+        "A diferenciação de um processo trend-stationary introduz uma raiz unitária na representação de média móvel.",
+        "Processos com raiz unitária exigem diferenciação para remover a dependência temporal na média e alcançar a estacionariedade.",
+        "Processos trend-stationary requerem a subtração da tendência temporal para obter um processo estacionário."
+      ]
+    },
+    {
+      "topic": "Fractional Integration",
+      "sub_topics": [
+        "A integração fracionária generaliza o conceito de processos integrados, permitindo valores não inteiros para a ordem de integração, d.",
+        "O operador de integração fracionária (1 - L)^-d é definido por meio de uma expansão em série e o comportamento dos coeficientes de resposta de impulso decai mais lentamente do que em processos ARMA.",
+        "Processos com integração fracionária podem representar dependências de longo prazo e memória em séries temporais.",
+        "Processos com integração fracionária são frequentemente usados para modelar a memória de longo prazo em dados econômicos e financeiros."
+      ]
+    },
+    {
+      "topic": "Occasional Breaks in Trend",
+      "sub_topics": [
+        "A ocorrência de quebras na tendência pode ser representada como uma variável aleatória.",
+        "Modelos com quebras ocasionais na tendência podem gerar características de séries temporais que se assemelham às de processos com raiz unitária, mas são fundamentalmente diferentes.",
+        "Um modelo com quebra ocasional na tendência assume que a série temporal pode mudar abruptamente sua tendência devido a eventos discretos."
+      ]
+    },
+    {
+      "topic": "Processamento de Raiz Unitária",
+      "sub_topics": [
+        "A operação de primeira diferença, denotada por Δyₜ = yₜ - yₜ₋₁, é fundamental para a implementação de modelos de raiz unitária. Este operador é aplicado iterativamente em séries temporais que possuem múltiplas raízes unitárias, resultando na necessidade de algoritmos para automatizar esse processo.",
+        "Em termos computacionais, ao lidar com modelos ARMA e raiz unitária, algoritmos de decomposição espectral são necessários para encontrar as raízes do polinômio autorregressivo e verificar se pelo menos uma delas é unitária. Isso envolve rotinas de busca de raízes e análises de estabilidade para determinar a natureza da série temporal.",
+        "O processo de diferenciação (aplicação do operador de primeira diferença) deve ser feito com cuidado, pois a aplicação excessiva do operador (diferenciação de ordem superior) pode introduzir dependência temporal indesejada e também aumentar a necessidade de recursos computacionais."
+      ]
+    },
+    {
+      "topic": "Previsão em Modelos Não Estacionários",
+      "sub_topics": [
+        "A previsão da trajetória de séries não estacionárias exige computacionalmente o rastreamento da variância do erro de previsão que aumenta conforme o horizonte de previsão se expande. Implementações eficientes precisam calcular a variância do erro e gerar intervalos de confiança das previsões.",
+        "A previsão em modelos de tendência determinística envolve adicionar o componente de tendência determinística (α + δ(t+s)) à previsão do componente estacionário, implicando a necessidade de rotinas de projeção e adição de componentes.",
+        "Na previsão com modelos de raiz unitária, a previsão é feita sobre as mudanças na série (Δyₜ) usando modelos estacionários, como um ARMA, o que requer a utilização de modelos de previsão para séries estacionárias e a posterior integração para encontrar a previsão do nível da série."
+      ]
+    },
+    {
+      "topic": "Transformações para Estacionariedade",
+      "sub_topics": [
+        "A transformação para atingir a estacionariedade em modelos de tendência determinística é realizada pela subtração da tendência estimada (detrending). Em termos computacionais, isso exige o uso de funções para detecção e remoção de tendências em séries temporais.",
+        "Modelos de raiz unitária exigem a diferenciação da série temporal para torná-la estacionária. Esse processo pode ser implementado através de uma função computacional que aplica o operador de diferença adequadamente. O número de diferenciações necessárias é uma decisão baseada na série temporal e nos resultados de testes de raiz unitária.",
+        "O tratamento correto para séries não estacionárias é crucial, pois a aplicação incorreta das transformações (diferenciação em modelos de tendência ou remoção da tendência em modelos de raiz unitária) pode introduzir problemas na modelagem, como modelos não invertíveis ou resultados estatísticos tendenciosos. Algoritmos robustos precisam detectar e tratar adequadamente séries com diferentes tipos de não estacionariedade."
+      ]
+    },
+    {
+      "topic": "Multiplicadores Dinâmicos e Persistência",
+      "sub_topics": [
+        "A comparação de multiplicadores dinâmicos entre modelos estacionários e não estacionários auxilia a entender o comportamento da série temporal sob diferentes pressupostos. Isso exige algoritmos para calcular os multiplicadores para diferentes modelos e compará-los.",
+        "Em modelos de raiz unitária, as inovações têm um efeito permanente no nível da série temporal, o que é capturado pelo multiplicador de longo prazo igual a ψ(1), enquanto em modelos de tendência estacionária, as inovações tendem a se dissipar no longo prazo. Implementações eficientes precisam contabilizar e exibir essa diferença no efeito de inovações ao longo do tempo.",
+        "O cálculo dos multiplicadores dinâmicos em modelos de séries temporais envolve a análise da resposta da série temporal a choques. Algoritmos podem ser implementados para calcular esses multiplicadores e avaliar o efeito persistente de inovações na série."
+      ]
+    },
+    {
+      "topic": "Testes de Raiz Unitária e suas Limitações",
+      "sub_topics": [
+        "A decisão de impor ou não restrições de raiz unitária deve levar em consideração o trade-off entre eficiência e consistência, e também as propriedades assintóticas dos testes. Implementações práticas podem usar o modelo tanto com quanto sem a raiz unitária imposta, avaliando as diferenças nas inferências.",
+        "A implementação e interpretação de testes de raiz unitária deve ser feita com cautela, pois os resultados são sensíveis a escolhas de parâmetros e podem gerar conclusões errôneas em amostras pequenas. Algoritmos robustos devem fornecer medidas de incerteza e testes de sensibilidade.",
+        "Testes de raiz unitária, como o teste de Dickey-Fuller, são usados para avaliar a presença de raiz unitária em uma série temporal. Implementações computacionais desses testes envolvem cálculos estatísticos específicos e são cruciais para análise de séries temporais não estacionárias."
+      ]
+    },
+    {
+      "topic": "Integração Fracionária",
+      "sub_topics": [
+        "A estimativa do parâmetro 'd' (ordem de integração fracionária) exige o uso de métodos estatísticos específicos. Implementações computacionais para estimar o parâmetro 'd' são essenciais para modelos de integração fracionária.",
+        "A implementação de modelos de integração fracionária envolve o cálculo de um filtro de médias móveis de ordem infinita (MA(∞)), onde os coeficientes são determinados por séries de potências de (1-L). Algoritmos devem ser capazes de aproximar e aplicar o filtro, usualmente truncando a série em um número adequado de termos.",
+        "Modelos de integração fracionária são uma alternativa aos modelos de raiz unitária, permitindo valores não inteiros do parâmetro de integração (d). Implementações computacionais exigem aproximações para lidar com o operador (1-L)⁻ᵈ."
+      ]
+    },
+    {
+      "topic": "Quebras Ocasionais na Tendência",
+      "sub_topics": [
+        "A modelagem de quebras ocasionais em séries temporais não estacionárias requer que o impacto destas quebras no nível da série seja considerado, e também pode ser representada usando um modelo de raiz unitária com inovações não gaussianas. Algoritmos devem ser capazes de combinar os modelos de quebras ocasionais com modelos de raiz unitária para capturar o comportamento real das séries.",
+        "A modelagem de quebras ocasionais exige a formulação de um modelo que permite quebras na tendência e o rastreamento dos parâmetros do modelo após a detecção de uma quebra. Implementações práticas devem rastrear a tendência e seus parâmetros de forma adaptativa, conforme novas observações são incluídas.",
+        "Modelos com quebras ocasionais na tendência modelam a série temporal com mudanças discretas na inclinação ou intercepto da tendência. Computacionalmente, a identificação e modelagem destas quebras exige algoritmos de detecção de mudança (change-point detection)."
+      ]
+    },
+    {
+      "topic": "Comparação de Processos Trend-Stationary e Unit Root",
+      "sub_topics": [
+        "A comparação entre modelos trend-stationary e unit root em termos computacionais envolve a avaliação de medidas como o Erro Quadrático Médio (MSE) do forecast. A implementação dessa avaliação requer o cálculo de previsões em diferentes horizontes de tempo e o cálculo do MSE para cada um desses horizontes.",
+        "A implementação computacional de modelos unit root requer técnicas de diferenciação, enquanto modelos trend-stationary precisam de subtração da tendência linear. A escolha entre essas abordagens tem implicações diretas no código e na complexidade do processamento.",
+        "A transformação de dados para atingir a estacionaridade é um passo crucial na análise de séries temporais não estacionárias. Modelos trend-stationary precisam de remoção da tendência linear, enquanto modelos unit root precisam de diferenciação. Implementar essa transformação de forma eficiente é fundamental para a análise computacional.",
+        "Em relação à análise de multiplicadores dinâmicos, modelos trend-stationary exibem efeitos de perturbações que diminuem com o tempo, enquanto modelos unit root mostram efeitos permanentes. A implementação dessa análise requer o cálculo e avaliação dos multiplicadores para determinar a persistência das inovações em cada modelo.",
+        "Processos integrados de ordem superior, como (1 - L)²y_t = κ + ψ(L)ε_t, demandam métodos de diferenciação de segunda ordem e podem requerer uma análise computacional mais complexa para simulação e previsão."
+      ]
+    },
+    {
+      "topic": "Comparação de Processos Trend-Stationary e Raiz Unitária",
+      "sub_topics": [
+        "Em processos de raiz unitária, a previsão de yt+s é obtida somando as mudanças previstas na série: yt+s = (yt+s - yt+s-1) + (yt+s-1 - yt+s-2) + ... + (yt+1 - yt) + yt. A projeção linear resulta em  ŷt+s|t = sδ + yt + (ψₛ + ψₛ₋₁ + ... + ψ₁)εₜ + (ψₛ₊₁ + ψₛ + ... + ψ₂)εₜ₋₁ + ...",
+        "Em processos trend-stationary, a previsão de yt+s é feita pela adição de um componente determinístico (α + δ(t+s)) à previsão do componente estocástico estacionário. O erro de previsão converge para a tendência ao longo do tempo. A previsão é calculada por ŷt+s|t = α + δ(t + s) + ψₛεt + ψₛ₊₁εt₋₁ + ψₛ₊₂εt₋₂ + ....",
+        "Em processos trend-stationary, o efeito de um choque estocástico diminui ao longo do tempo (lim s→∞ ∂yt+s/∂εt = 0). Em processos de raiz unitária, o efeito é permanente (lim s→∞ ∂yt+s/∂εt = ψ(1)). No contexto de modelos de raiz unitária, o efeito de uma inovação (εₜ) na variável (yₜ) é capturado por lim s→∞ ∂yₜ₊ₛ/∂εₜ = 1 + ψ₁ + ψ₂ + ... = ψ(1).",
+        "Para um processo trend-stationary, o erro de previsão converge para a variância incondicional do componente estacionário. Para um processo de raiz unitária, o erro de previsão cresce com o horizonte de previsão, aproximando-se de uma função linear de s. A variância do erro de previsão para trend-stationary é  E[(yt+s - ŷt+s|t)²] = {1 + ψ₁² + ψ₂² + ... + ψₛ₋₁²}σ²,  enquanto para raiz unitária  E[(yt+s - ŷt+s|t)²]  aumenta linearmente com o horizonte de tempo s. (Ex: E[(yt+s - ŷt+s|t)²] = {1 + (s - 1)(1 + θ)²}σ² para  ARIMA(0, 1, 1))",
+        "Um passeio aleatório com deriva (yt = yt-1 + δ + εt) é um caso especial de um processo de raiz unitária onde a previsão cresce a uma taxa constante δ por período. Processos ARIMA(0, 1, 1) também compartilham essa característica."
+      ]
+    },
+    {
+      "topic": "Transformações para Alcançar Estacionaridade",
+      "sub_topics": [
+        "A diferenciação de um processo trend-stationary introduz uma raiz unitária na representação da média móvel, resultando em dificuldades em modelagem com processos não invertíveis.",
+        "A remoção da tendência em processos de raiz unitária remove a dependência temporal da média, mas não da variância. O tratamento correto envolve a diferenciação da série (Δyt) e não a remoção da tendência.",
+        "Processos trend-stationary são transformados em estacionários pela subtração da tendência temporal (yt - (α + δt)). Processos de raiz unitária são transformados pela diferenciação (Δyt = yt - yt-1)."
+      ]
+    },
+    {
+      "topic": "Testes de Raízes Unitárias",
+      "sub_topics": [
+        "A questão sobre se yₜ segue um processo de raiz unitária pode ser formulada como se o espectro da população de Δyₜ em frequência zero é igual a zero. Entretanto, em amostras finitas, não há informação sobre ciclos com período maior que o tamanho da amostra.",
+        "A verossimilhança condicional para um processo gaussiano é contínua no parâmetro λ₁. Para qualquer tamanho de amostra fixo T, existe um processo estacionário com λ₁ < 1 que é quase indistinguível de um processo com raiz unitária (λ₁ = 1).",
+        "Um processo de raiz unitária e um processo estacionário podem ter implicações observáveis idênticas em amostras finitas. Para qualquer processo de raiz unitária, existe um processo estacionário que é indistinguível com amostras finitas."
+      ]
+    }
+  ]
+}
