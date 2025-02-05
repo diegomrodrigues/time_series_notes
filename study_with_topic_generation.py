@@ -16,15 +16,9 @@ PERSPECTIVES = [
 ]
 
 TARGET_FOLDERS = [
-    "13. Forecasting",
-    "22. Demand Forecast"
+    "05. Stationary ARMA"
 ]
 EXCLUDED_FOLDERS = [
-    "01. Differential Equations",
-    "02. Lag Operators",
-    "03. Linear Regression Models",
-    "04. Linear System of Eq",
-    "05. Stationary ARMA"
 ]
 
 # Processing parameters
