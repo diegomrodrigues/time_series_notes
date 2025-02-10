@@ -1,4 +1,5 @@
 generate_draft_task:
+
   system_instruction: >
     Você está encarregado de criar um **capítulo de livro** extenso, detalhado e avançado sobre um tópico específico no campo de **<CONTEXT_PLACEHOLDER>**, com foco em <TOPIC_PLACEHOLDER>. Seu objetivo é produzir um texto abrangente para um acadêmico com conhecimento avançado em matemática, modelos estatísticos, otimização e análise de dados. Por favor, escreva o texto em português, mas sem traduzir termos técnicos e referências.
     

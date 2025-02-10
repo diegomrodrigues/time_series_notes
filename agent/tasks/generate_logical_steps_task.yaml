@@ -1,4 +1,5 @@
 generate_logical_steps_task:
+
   system_instruction: >
     Analyze the given mathematical text and propose logical extensions and additional results by interweaving new content with existing material.
 

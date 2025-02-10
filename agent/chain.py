@@ -33,6 +33,7 @@ class ChainStep:
     input_files: Optional[List[Path]] = None
     use_previous_result: bool = False
     additional_context: Optional[str] = None
+    generate_plots: bool = False
     
     # Output control
     expect_json: bool = False
@@ -317,9 +318,18 @@ class TaskChain:
         if not step.input_files:
             return None
             
+        # Define common MIME types
+        mime_types = {
+            '.pdf': 'application/pdf',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg'
+        }
+            
         uploaded_files = []
         for file_path in step.input_files:
-            mime_type = "application/pdf" if file_path.suffix.lower() == ".pdf" else None
+            # Get MIME type based on file extension, default to None if not found
+            mime_type = mime_types.get(file_path.suffix.lower())
             uploaded_file = self.processor.upload_file(str(file_path), mime_type=mime_type)
             uploaded_files.append(uploaded_file)
         
