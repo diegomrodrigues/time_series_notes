@@ -1,4 +1,6 @@
 cleanup_task:
+  model_name: gemini-2.0-flash
+
   system_instruction: >
     Remove any prompt artifacts or instructions that were accidentally included in the generated text while preserving all actual content. 
 

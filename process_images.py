@@ -47,7 +47,7 @@ def get_numbered_folders(base_dir: Path) -> list[str]:
 
 def main():
     # Load environment variables from .env file
-    load_dotenv()
+    from google.colab import userdata # type: ignore
     
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Process images and generate metadata')
@@ -59,7 +59,7 @@ def main():
     
     # Load configuration and initialize processor
     tasks_config = load_tasks_config()
-    api_key = os.getenv("GOOGLE_API_KEY")
+    api_key = userdata.get("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("GOOGLE_API_KEY environment variable is required")
     

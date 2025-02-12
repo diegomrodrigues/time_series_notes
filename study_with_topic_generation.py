@@ -4,7 +4,6 @@ import yaml
 from agent.processor import TaskProcessor
 from agent.directory_processor import DirectoryProcessor
 import argparse
-from dotenv import load_dotenv
 
 BASE_DIR = "./"
 
@@ -16,7 +15,7 @@ PERSPECTIVES = [
 ]
 
 TARGET_FOLDERS = [
-    "23. GARCH Model"
+    "05. Stationary ARMA"
 ]
 EXCLUDED_FOLDERS = [
 ]
@@ -58,9 +57,8 @@ def get_numbered_folders(base_dir: Path) -> list[str]:
     return sorted(folders)
 
 def main():
-    # Load environment variables from .env file
-    load_dotenv()
-    
+    from google.colab import userdata # type: ignore
+
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Process study materials with topic generation')
     parser.add_argument('--debug', type=lambda x: x.lower() == 'true', default=False,
@@ -69,7 +67,7 @@ def main():
     
     # Load configuration and initialize processor
     tasks_config = load_tasks_config()
-    api_key = os.getenv("GOOGLE_API_KEY")
+    api_key = userdata.get("GOOGLE_API_KEY")
     if not api_key:
         raise ValueError("GOOGLE_API_KEY environment variable is required")
     

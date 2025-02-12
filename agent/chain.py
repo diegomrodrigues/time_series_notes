@@ -34,6 +34,7 @@ class ChainStep:
     use_previous_result: bool = False
     additional_context: Optional[str] = None
     generate_plots: bool = False
+    verify_result: bool = False
     
     # Output control
     expect_json: bool = False
@@ -142,12 +143,14 @@ class TaskChain:
             if self.debug:
                 print(f"\n    - Starting task: {i+1}/{len(step.tasks)} {task_name}")
             
+            is_last_task = i == (len(step.tasks) - 1)
+
             iterations = 0
             while iterations < step.max_iterations:
                 print(f"\n→ Executing task {task_name} ({iterations + 1}/{step.max_iterations})")
                 
                 task_config = self._prepare_task_config(task_name, step, current_content, iterations)
-                result = self._execute_task(task_name, task_config, current_content, step, uploaded_files, last_valid_json)
+                result = self._execute_task(task_name, task_config, current_content, step, is_last_task, uploaded_files, last_valid_json)
                 
                 if result is None:
                     if self.debug:
@@ -219,7 +222,7 @@ class TaskChain:
         )
 
     def _execute_task(self, task_name: str, task_config: Dict[str, Any], content: str, 
-                     step: ChainStep, files: Optional[List[Any]], last_valid_json: Optional[str]) -> Optional[str]:
+                     step: ChainStep, is_last_task: bool, files: Optional[List[Any]], last_valid_json: Optional[str]) -> Optional[str]:
         """Execute a single task with error handling."""
         try:
             result = self.processor.process_task(
@@ -238,11 +241,34 @@ class TaskChain:
                 print(f"❌ Step failed at task: {task_name}")
                 return None
                 
+            # Add verification step for verification tasks
+            if is_last_task and step.verify_result:
+                verification = self._verify_content(result, step)
+                if verification != "yes":
+                    print(f"❌ Content verification failed for {task_name}")
+                    return None
+                    
             return result
             
         except Exception as e:
             print(f"❌ Error in task {task_name}: {str(e)}")
             return None
+
+    def _verify_content(self, content: str, step: ChainStep) -> str:
+        """Run content verification task."""
+        if self.debug:
+            print("🔍 Running content verification...")
+            
+        verification_task = self.tasks_config["content_verification_task"]
+        result = self.processor.process_task(
+            "content_verification_task",
+            verification_task,
+            content,
+            expect_json=False,
+            extract_json=False
+        )
+        
+        return result.strip().lower() if result else "no"
 
     def _process_task_result(self, result: str, current_content: str, step: ChainStep, 
                            iteration: int, last_valid_json: Optional[str]) -> tuple[str, Optional[str]]:

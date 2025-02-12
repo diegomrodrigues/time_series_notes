@@ -246,7 +246,8 @@ class TopicProcessor:
             input_files=pdf_files,
             stop_at="<!-- END -->",
             max_iterations=3,
-            additional_context=context
+            additional_context=context,
+            verify_result=True
         )
 
     def _create_enhancement_step(self) -> ChainStep:
@@ -255,15 +256,16 @@ class TopicProcessor:
             name="Review and Enhance",
             tasks=[
                 "cleanup_task",
-                "inject_images_task",
                 "generate_logical_steps_task",
                 "generate_step_proofs_task",
                 "generate_examples_task",
+                "inject_images_task",
                 "format_math_task",
                 "cleanup_task"
             ],
             stop_at="<!-- END -->",
-            max_iterations=3
+            max_iterations=3,
+            verify_result=True
         )
 
     def _build_previous_topics_context(self, previous_topics: List[TopicResult], 

@@ -1,4 +1,6 @@
 inject_images_task:
+  model_name: gemini-2.0-pro-exp-02-05
+  temperature: 0.5
 
   system_instruction: >
     Analyze the content and available images from the images.md catalog. Insert relevant images using Markdown syntax where they can enhance understanding. Follow these guidelines:

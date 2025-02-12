@@ -1,4 +1,6 @@
 format_math_task:
+  model_name: gemini-2.0-flash
+
   system_instruction: >
     Format all mathematical expressions using LaTeX notation within $ or $$ delimiters. 
             

@@ -130,9 +130,6 @@ class TaskProcessor:
                         print(f"  - JSON length: {len(extracted_json)}")
                     print("✓ JSON extraction succeed")
                     
-                    # Add plot generation if configured
-                    if task_config.get('generate_plots', False):
-                        result = self._generate_plots_from_code(extracted_json, task_config)
                     
                     return extracted_json
                 else:
@@ -140,7 +137,11 @@ class TaskProcessor:
                         print("  ❌ JSON extraction failed")
                     print("⚠️ JSON extraction failed.")
                     return None
-                    
+
+            # Add plot generation if configured
+            if result and task_config.get('generate_plots', False):
+                result = self._generate_plots_from_code(result, task_config)
+
             return result
             
         except Exception as e:
@@ -257,19 +258,67 @@ class TaskProcessor:
         images_dir = Path(task_config.get('directory', '.')) / "images"
         images_dir.mkdir(exist_ok=True)
         
-        # Find all Python code blocks
-        code_blocks = re.findall(r'```python\n(.*?)\n```', content, re.DOTALL)
+        # Get the next available plot index
+        existing_plots = [f.stem for f in images_dir.glob('plot_*.png')]
+        next_index = max([int(name.split('_')[1]) for name in existing_plots], default=-1) + 1
         
-        for i, code in enumerate(code_blocks):
+        if self.debug:
+            print(f"  - Images directory: {images_dir}")
+            print(f"  - Next plot index starts at: {next_index}")
+        
+        # Find all Python code blocks with different possible formats
+        code_patterns = [
+            r'```python\n(.*?)\n```',           # Standard format
+            r'```py\n(.*?)\n```'                # Alternative format
+        ]
+        
+        code_blocks = []
+        for pattern in code_patterns:
+            blocks = re.finditer(pattern, content, re.DOTALL)
+            for block in blocks:
+                code = block.group(1).strip()
+                # Only process blocks that seem to contain plotting code
+                if any(keyword in code for keyword in ['plt.', 'matplotlib', 'seaborn', 'sns.']):
+                    code_blocks.append((block.group(0), code))
+        
+        if self.debug:
+            print(f"  - Found {len(code_blocks)} potential plotting code blocks")
+        
+        for i, (original_block, code) in enumerate(code_blocks, start=next_index):
+            if self.debug:
+                print(f"\n  Processing code block {i}:")
+                print(f"  {'='*40}")
+                print(f"  {code[:200]}...")
+            
             try:
-                # Create temporary file
+                # Create temporary file with necessary imports
                 with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.py') as f:
-                    # Redirect plots to file instead of showing
-                    modified_code = code.replace('plt.show()', 'plt.savefig(f"{images_dir}/plot_{i}.png")')
+                    # Add common imports if not present
+                    imports = []
+                    if 'matplotlib' not in code:
+                        imports.append('import matplotlib.pyplot as plt')
+                    if 'numpy' in code and 'numpy' not in imports:
+                        imports.append('import numpy as np')
+                    if 'seaborn' in code or 'sns.' in code:
+                        imports.append('import seaborn as sns')
+                    
+                    # Modify the code to save instead of show
+                    modified_code = '\n'.join(imports) + '\n\n' if imports else ''
+                    modified_code += code.replace('plt.show()', '').strip()
+                    modified_code += f'\nplt.savefig("plot_{i}.png")\nplt.close()'
+                    
                     f.write(modified_code)
                     temp_path = f.name
+                    
+                    if self.debug:
+                        print(f"  - Created temporary file: {temp_path}")
+                        print("  - Modified code:")
+                        print(f"  {modified_code[:200]}...")
                 
                 # Execute in isolated process
+                if self.debug:
+                    print("  - Executing code...")
+                
                 result = subprocess.run(
                     ['python', temp_path],
                     capture_output=True,
@@ -278,20 +327,27 @@ class TaskProcessor:
                     cwd=images_dir
                 )
                 
+                if self.debug:
+                    print(f"  - Execution return code: {result.returncode}")
+                    if result.stderr:
+                        print(f"  - Stderr: {result.stderr}")
+                
                 if result.returncode == 0 and (images_dir / f"plot_{i}.png").exists():
                     # Replace code block with image reference
                     content = content.replace(
-                        f'```python\n{code}\n```',
+                        original_block,
                         f'![Generated plot](./images/plot_{i}.png)',
                         1
                     )
-                    
-                if self.debug:
-                    print(f"  - Processed code block {i+1}, return code: {result.returncode}")
-                
+                    if self.debug:
+                        print(f"  ✓ Successfully generated plot_{i}.png")
+                else:
+                    if self.debug:
+                        print("  ⚠️ Plot generation failed")
+            
             except Exception as e:
                 if self.debug:
-                    print(f"  ⚠️ Error processing code block {i+1}: {str(e)}")
+                    print(f"  ❌ Error processing code block: {str(e)}")
                 continue
             finally:
                 Path(temp_path).unlink(missing_ok=True)

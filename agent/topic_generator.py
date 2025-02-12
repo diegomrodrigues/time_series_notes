@@ -247,8 +247,8 @@ class TopicGenerator:
             ChainStep(
                 name=f"Consolidate Subtopics step {i}",
                 tasks=["consolidate_subtopics"],
-                extract_json=True,
-                max_iterations=5,
+                expect_json=True,
+                max_iterations=10,
                 use_previous_result=True,
                 additional_context=context,
                 stop_at="<!-- END -->"
