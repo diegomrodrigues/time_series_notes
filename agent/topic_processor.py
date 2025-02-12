@@ -199,7 +199,7 @@ class TopicProcessor:
                     chain = self._create_processing_chain(pdf_files, context)
                 
                 input_text = self._build_input_text(directory, section_name, topic)
-                content = chain.run(input_text)
+                content = chain.run(input_text, directory)
                 
                 if self.debug:
                     print(f"  - Content generated, length: {len(content)}")

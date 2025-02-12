@@ -1,0 +1,52 @@
+{
+  "images": [
+    {
+      "filename": "figure1.png",
+      "path": "images/figure1.png",
+      "description": "A imagem mostra cinco s\u00e9ries temporais simuladas, cada uma representando um processo autoregressivo (AR) diferente. As s\u00e9ries s\u00e3o exibidas em pain\u00e9is separados verticalmente. A primeira s\u00e9rie \u00e9 rotulada como \"AR\", sem par\u00e2metros especificados. A segunda s\u00e9rie \u00e9 rotulada como \"AR\" com \\( \\varphi = 0.3 \\). A terceira s\u00e9rie \u00e9 rotulada como \"AR\" com \\( \\varphi = 0.9 \\). A quarta s\u00e9rie \u00e9 rotulada como \"AR\" com \\( \\varphi_1 = 0.3 \\) e \\( \\varphi_2 = 0.3 \\). A quinta s\u00e9rie \u00e9 rotulada como \"AR\" com \\( \\varphi_1 = 0.9 \\) e \\( \\varphi_2 = -0.8 \\).",
+      "legenda": ""
+    },
+    {
+      "filename": "figure2.png",
+      "path": "images/figure2.png",
+      "description": "A imagem exibe tr\u00eas gr\u00e1ficos relacionados a um processo AR(1) com alpha = 0.9 e sigma^2 = 1. O primeiro gr\u00e1fico mostra a s\u00e9rie temporal xt, exibindo um padr\u00e3o de oscila\u00e7\u00f5es irregulares ao longo do tempo. Os dois gr\u00e1ficos subsequentes apresentam as fun\u00e7\u00f5es de autocorrela\u00e7\u00e3o (ACF) e autocorrela\u00e7\u00e3o parcial (PACF) da s\u00e9rie xt, respectivamente, com picos significativos nos primeiros lags, indicando a depend\u00eancia temporal do processo AR(1).",
+      "legenda": ""
+    },
+    {
+      "filename": "figure3.png",
+      "path": "images/figure3.png",
+      "description": "A imagem \u00e9 um gr\u00e1fico que representa a primeira autocorrela\u00e7\u00e3o (\u03c1\u2081) para um processo MA(1) em fun\u00e7\u00e3o de diferentes valores de \u03b8. O eixo horizontal representa \u03b8, enquanto o eixo vertical representa o valor da autocorrela\u00e7\u00e3o, variando de -1 a 1. A curva mostra como \u03c1\u2081 varia com \u03b8, atingindo um valor m\u00e1ximo e tendendo a zero para valores extremos de \u03b8. Linhas horizontais indicam valores de autocorrela\u00e7\u00e3o \u03c1 em 0 e 0.5 e linhas verticais tracejadas indicam que para cada valor de \u03c1 existem dois valores de \u03b8 possiveis.",
+      "legenda": ""
+    },
+    {
+      "filename": "figure4.png",
+      "path": "images/figure4.png",
+      "description": "O gr\u00e1fico representa uma realiza\u00e7\u00e3o de um processo de ru\u00eddo branco com \\(\\phi = 0\\), conforme mencionado na legenda. Este processo \u00e9 caracterizado por n\u00e3o ter autocorrela\u00e7\u00e3o, o que se manifesta visualmente na aus\u00eancia de padr\u00f5es ou tend\u00eancias aparentes na s\u00e9rie temporal. A imagem, mencionada no contexto das p\u00e1ginas 44-47 do documento, ilustra um dos blocos de constru\u00e7\u00e3o b\u00e1sicos para modelos de s\u00e9ries temporais discutidos no Cap\u00edtulo 3, onde a aus\u00eancia de depend\u00eancia temporal \u00e9 um aspecto chave.",
+      "legenda": ""
+    },
+    {
+      "filename": "figure5.png",
+      "path": "images/figure5.png",
+      "description": "A imagem mostra dois gr\u00e1ficos de s\u00e9ries temporais simuladas, representando realiza\u00e7\u00f5es de um processo AR(1) (Autorregressivo de primeira ordem) com diferentes valores do par\u00e2metro \u03c6. O gr\u00e1fico superior (b) exibe uma s\u00e9rie com \u03c6 = 0.5, apresentando flutua\u00e7\u00f5es mais r\u00e1pidas em torno da linha zero. O gr\u00e1fico inferior (c) ilustra um processo com \u03c6 = 0.9, onde as flutua\u00e7\u00f5es s\u00e3o mais lentas e as observa\u00e7\u00f5es tendem a permanecer acima ou abaixo da m\u00e9dia por per\u00edodos mais longos, conforme discutido nas se\u00e7\u00f5es 3.4 e 3.4.1.",
+      "legenda": ""
+    },
+    {
+      "filename": "figure6.png",
+      "path": "images/figure6.png",
+      "description": "A imagem mostra tr\u00eas gr\u00e1ficos relacionados a um processo AR(1) (Autoregressivo de ordem 1) com par\u00e2metros alpha = -0.5 e sigma^2 = 3. O primeiro gr\u00e1fico exibe a s\u00e9rie temporal do processo AR(1), mostrando os valores da s\u00e9rie (ts(xt)) ao longo do tempo. O segundo gr\u00e1fico representa a Fun\u00e7\u00e3o de Autocorrela\u00e7\u00e3o (ACF) da s\u00e9rie, indicando a correla\u00e7\u00e3o entre os valores da s\u00e9rie em diferentes lags. O terceiro gr\u00e1fico mostra a Fun\u00e7\u00e3o de Autocorrela\u00e7\u00e3o Parcial (Partial ACF), que mede a correla\u00e7\u00e3o entre os valores da s\u00e9rie em um determinado lag, removendo a influ\u00eancia dos lags intermedi\u00e1rios. A imagem pode ser encontrada no Cap\u00edtulo 3, que trata de Processos ARMA Estacion\u00e1rios.",
+      "legenda": ""
+    },
+    {
+      "filename": "figure7.png",
+      "path": "images/figure7.png",
+      "description": "A imagem apresenta cinco gr\u00e1ficos de autocorrela\u00e7\u00e3o distintos, cada um representando um processo de s\u00e9rie temporal diferente. O gr\u00e1fico (a) ilustra o ru\u00eddo branco, onde a autocorrela\u00e7\u00e3o \u00e9 significativa apenas no lag zero. Os gr\u00e1ficos (b) e (c) mostram processos de m\u00e9dia m\u00f3vel (MA), enquanto os gr\u00e1ficos (d) e (e) exibem processos autorregressivos (AR), com diferentes padr\u00f5es de decaimento e oscila\u00e7\u00e3o na autocorrela\u00e7\u00e3o, conforme suas respectivas equa\u00e7\u00f5es. Esses gr\u00e1ficos auxiliam na identifica\u00e7\u00e3o visual de modelos de s\u00e9ries temporais e s\u00e3o referenciados no Cap\u00edtulo 3 do documento.",
+      "legenda": ""
+    },
+    {
+      "filename": "figure8.png",
+      "path": "images/figure8.png",
+      "description": "A imagem mostra tr\u00eas gr\u00e1ficos relacionados a um processo AR(2) (Auto-Regressivo de ordem 2). O primeiro gr\u00e1fico exibe a s\u00e9rie temporal do processo AR(2) com coeficientes Phi1 = 1.74 e Phi2 = -0.9, mostrando as oscila\u00e7\u00f5es da s\u00e9rie ao longo do tempo. Os dois gr\u00e1ficos inferiores exibem as fun\u00e7\u00f5es de autocorrela\u00e7\u00e3o (ACF) e autocorrela\u00e7\u00e3o parcial (PACF) da s\u00e9rie temporal 'xt', usadas para identificar a ordem do processo ARMA. As linhas tracejadas horizontais em ambos os gr\u00e1ficos ACF e PACF indicam os limites de confian\u00e7a para determinar quais lags s\u00e3o estatisticamente significativos.",
+      "legenda": ""
+    }
+  ]
+}

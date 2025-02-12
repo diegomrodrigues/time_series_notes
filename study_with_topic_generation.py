@@ -14,11 +14,14 @@ PERSPECTIVES = [
     "Foque nos aspectos computacionais e de implementação, incluindo algoritmos de processamento de séries temporais, otimização de código e análise em larga escala."
 ]
 
+# Configuration for directory filtering
 TARGET_FOLDERS = [
-    "05. Stationary ARMA"
+    "20. Time Series of Heteroskedastic",
+    "23. GARCH Model"
 ]
 EXCLUDED_FOLDERS = [
 ]
+
 
 # Processing parameters
 NUM_TOPICS = None

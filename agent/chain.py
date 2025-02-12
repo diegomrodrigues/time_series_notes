@@ -86,7 +86,7 @@ class TaskChain:
 
     
     @retry_on_error(max_retries=3)
-    def run(self, initial_content: str) -> Optional[str]:
+    def run(self, initial_content: str, directory: Path = None) -> Optional[str]:
         """Run all steps in the chain sequentially with retries."""
         if self.debug:
             print("\n🔍 DEBUG: Starting chain execution")
@@ -102,7 +102,7 @@ class TaskChain:
                 print(f"  - Step name: {step.name}")
                 print(f"  - Tasks: {step.tasks}")
             
-            result = self.process_step(step, current_content)
+            result = self.process_step(step, current_content, directory)
             if result:
                 if self.debug:
                     print(f"  ✔️ Step completed successfully")
@@ -121,7 +121,7 @@ class TaskChain:
         return current_content
 
     @retry_on_error(max_retries=3)
-    def process_step(self, step: ChainStep, content: str) -> Optional[str]:
+    def process_step(self, step: ChainStep, content: str, directory: Path = None) -> Optional[str]:
         """Process all tasks in a single step with retries."""
         if self.debug:
             print("\n🔍 DEBUG: Processing step")
@@ -151,7 +151,16 @@ class TaskChain:
                 print(f"\n→ Executing task {task_name} ({iterations + 1}/{step.max_iterations})")
                 
                 task_config = self._prepare_task_config(task_name, step, current_content, iterations)
-                result = self._execute_task(task_name, task_config, current_content, step, is_last_task, uploaded_files, last_valid_json)
+                result = self._execute_task(
+                    task_name, 
+                    task_config, 
+                    current_content, 
+                    step, 
+                    is_last_task, 
+                    uploaded_files, 
+                    last_valid_json,
+                    directory
+                )
                 
                 if result is None:
                     if self.debug:
@@ -229,8 +238,16 @@ class TaskChain:
             "Continue the text from this point, providing only new content:\n"
         )
 
-    def _execute_task(self, task_name: str, task_config: Dict[str, Any], content: str, 
-                     step: ChainStep, is_last_task: bool, files: Optional[List[Any]], last_valid_json: Optional[str]) -> Optional[str]:
+    def _execute_task(self, 
+        task_name: str, 
+        task_config: Dict[str, Any], 
+        content: str, 
+        step: ChainStep, 
+        is_last_task: bool, 
+        files: Optional[List[Any]] = None, 
+        last_valid_json: Optional[str] = None,
+        directory: Optional[Path] = None
+    ) -> Optional[str]:
         """Execute a single task with error handling."""
         try:
             result = self.processor.process_task(
@@ -239,7 +256,8 @@ class TaskChain:
                 content,
                 expect_json=step.expect_json,
                 extract_json=step.extract_json,
-                files=files
+                files=files,
+                directory=directory
             )
             
             if self.debug:

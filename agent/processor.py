@@ -9,6 +9,7 @@ from .utils import retry_on_error
 import re  # Ensure the re module is imported
 import subprocess
 import tempfile
+import textwrap
 
 class TaskProcessor:
     """Handles communication with the Gemini API for processing tasks."""
@@ -80,7 +81,8 @@ class TaskProcessor:
         content: str,
         expect_json: bool = False,
         extract_json: bool = False,
-        files: Optional[List[Any]] = None
+        files: Optional[List[Any]] = None,
+        directory: Optional[Path] = None
     ) -> Optional[str]:
         """Process a single task using the Gemini API."""
         print(f"Processing task: {task_name}")
@@ -140,7 +142,7 @@ class TaskProcessor:
 
             # Add plot generation if configured
             if result and task_config.get('generate_plots', False):
-                result = self._generate_plots_from_code(result, task_config)
+                result = self._generate_plots_from_code(result, task_config, directory)
 
             return result
             
@@ -225,23 +227,24 @@ class TaskProcessor:
                 print(f"Invalid JSON snippet: {json_str[e.pos-50:e.pos+50]}")
             return False
 
-    def _generate_plots_from_code(self, content: str, task_config: Dict[str, Any]) -> str:
+    def _generate_plots_from_code(self, content: str, task_config: Dict[str, Any], directory: Optional[Path] = None) -> str:
         """Extract and execute Python code blocks to generate plots."""
         if self.debug:
             print("\n🔍 DEBUG: Plot generation from code blocks")
         
-        # Create images directory if needed
-        images_dir = Path(task_config.get('directory', '.')) / "images"
+        # Get base directory from task config
+        if directory:
+            base_dir = directory
+        else:
+            base_dir = Path(task_config.get('directory', '.'))
+    
+        images_dir = base_dir / "images"
         images_dir.mkdir(exist_ok=True)
-        
-        # Get the next available plot index
-        existing_plots = [f.stem for f in images_dir.glob('plot_*.png')]
-        next_index = max([int(name.split('_')[1]) for name in existing_plots], default=-1) + 1
-        
+
         if self.debug:
+            print(f"  - Base directory: {base_dir}")
             print(f"  - Images directory: {images_dir}")
-            print(f"  - Next plot index starts at: {next_index}")
-        
+
         # Find all Python code blocks with different possible formats
         code_patterns = [
             r'```python\n(.*?)\n```',           # Standard format
@@ -252,45 +255,43 @@ class TaskProcessor:
         for pattern in code_patterns:
             blocks = re.finditer(pattern, content, re.DOTALL)
             for block in blocks:
-                code = block.group(1).strip()
-                # Only process blocks that seem to contain plotting code
-                if any(keyword in code for keyword in ['plt.', 'matplotlib', 'seaborn', 'sns.']):
-                    code_blocks.append((block.group(0), code))
-        
+                raw_code = block.group(1).strip()
+                cleaned_code = self._clean_code_block(raw_code)
+                if any(keyword in cleaned_code for keyword in ['plt.', 'matplotlib', 'seaborn', 'sns.']):
+                    code_blocks.append((block.group(0), cleaned_code))
+
         if self.debug:
             print(f"  - Found {len(code_blocks)} potential plotting code blocks")
-        
-        for i, (original_block, code) in enumerate(code_blocks, start=next_index):
+
+        for i, (original_block, code) in enumerate(code_blocks, start=1):
             if self.debug:
                 print(f"\n  Processing code block {i}:")
                 print(f"  {'='*40}")
-                print(f"  {code[:200]}...")
+                print(f"  Cleaned code:\n{code[:200]}...")
             
             try:
-                # Create temporary file with necessary imports
                 with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.py') as f:
                     # Add common imports if not present
                     imports = []
                     if 'matplotlib' not in code:
                         imports.append('import matplotlib.pyplot as plt')
-                    if 'numpy' in code and 'numpy' not in imports:
+                    if 'numpy' in code and 'import numpy' not in code:
                         imports.append('import numpy as np')
                     if 'seaborn' in code or 'sns.' in code:
                         imports.append('import seaborn as sns')
                     
-                    # Modify the code to save instead of show
-                    modified_code = '\n'.join(imports) + '\n\n' if imports else ''
-                    modified_code += code.replace('plt.show()', '').strip()
-                    modified_code += f'\nplt.savefig("plot_{i}.png")\nplt.close()'
+                    # Build final code with imports and savefig
+                    final_code = '\n'.join(imports) + '\n\n' if imports else ''
+                    final_code += code.replace('plt.show()', '').strip()
+                    final_code += f'\nplt.savefig("plot_{i}.png", bbox_inches="tight")\nplt.close()'
                     
-                    f.write(modified_code)
+                    f.write(final_code)
                     temp_path = f.name
                     
                     if self.debug:
                         print(f"  - Created temporary file: {temp_path}")
-                        print("  - Modified code:")
-                        print(f"  {modified_code[:200]}...")
-                
+                        print(f"  - Final code:\n{final_code[:200]}...")
+
                 # Execute in isolated process
                 if self.debug:
                     print("  - Executing code...")
@@ -307,9 +308,8 @@ class TaskProcessor:
                     print(f"  - Execution return code: {result.returncode}")
                     if result.stderr:
                         print(f"  - Stderr: {result.stderr}")
-                
+
                 if result.returncode == 0 and (images_dir / f"plot_{i}.png").exists():
-                    # Replace code block with image reference
                     content = content.replace(
                         original_block,
                         f'![Generated plot](./images/plot_{i}.png)',
@@ -329,6 +329,17 @@ class TaskProcessor:
                 Path(temp_path).unlink(missing_ok=True)
         
         return content
+
+    def _clean_code_block(self, code: str) -> str:
+        """Clean and normalize code block indentation."""
+        # Remove common leading whitespace and fix line endings
+        cleaned = '\n'.join([line.rstrip() for line in code.split('\n')])
+        # Normalize tabs to 4 spaces
+        cleaned = cleaned.expandtabs(4)
+        # Remove empty lines at start/end
+        cleaned = cleaned.strip('\n')
+        # Remove any remaining leading whitespace that's common to all lines
+        return textwrap.dedent(cleaned)
 
     def _extract_json_via_code_block(self, text: str) -> Optional[str]:
         """Extract JSON from markdown code blocks with multiple fallbacks."""
