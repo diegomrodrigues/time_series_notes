@@ -63,11 +63,13 @@ def main():
     parser = argparse.ArgumentParser(description='Process study materials with topic generation')
     parser.add_argument('--debug', type=lambda x: x.lower() == 'true', default=False,
                        help='Enable debug mode (true/false)')
+    parser.add_argument('--api_key', type=str, required=True, help='GOOGLE_API_KEY')
+    
     args = parser.parse_args()
     
     # Load configuration and initialize processor
     tasks_config = load_tasks_config()
-    api_key = userdata.get("GOOGLE_API_KEY")
+    api_key = args.api_key
     if not api_key:
         raise ValueError("GOOGLE_API_KEY environment variable is required")
     

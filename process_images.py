@@ -1,17 +1,15 @@
 from pathlib import Path
-import os
 import yaml
 from agent.processor import TaskProcessor
 from agent.image_processor import ImageProcessor
 import argparse
-from dotenv import load_dotenv
 
 # Base directory for processing
 BASE_DIR = "./"
 
 # Configuration for directory filtering
 TARGET_FOLDERS = [
-    "04. Monte Carlo Methods"
+    "05. Stationary ARMA"
 ]
 EXCLUDED_FOLDERS = [
 ]
@@ -55,11 +53,13 @@ def main():
                        help='Enable debug mode (true/false)')
     parser.add_argument('--base-dir', type=str, default=BASE_DIR,
                        help='Base directory to process')
+    parser.add_argument('--api_key', type=str, required=True, help='GOOGLE_API_KEY')
+    
     args = parser.parse_args()
     
     # Load configuration and initialize processor
     tasks_config = load_tasks_config()
-    api_key = userdata.get("GOOGLE_API_KEY")
+    api_key = args.api_key
     if not api_key:
         raise ValueError("GOOGLE_API_KEY environment variable is required")
     

@@ -190,64 +190,40 @@ class TaskProcessor:
         return response.text
  
     def _extract_json(self, text: str) -> Optional[str]:
-        """Extract JSON from text response using multiple fallback strategies."""
-        if self.debug:
-            print("\n🔍 DEBUG: JSON extraction")
-            print(f"  - Input text length: {len(text)}")
+        """Enhanced JSON extraction with multiple fallback strategies."""
+        strategies = [
+            self._extract_json_via_code_block,
+            self._extract_json_via_bracket_matching,
+            self._extract_json_via_repair
+        ]
         
-        # Strategy 1: Look for ```json blocks
-        json_block = re.search(
-            r"```(?:json)?\s*([\{\[].*?[\}\]])\s*```", 
-            text, 
-            re.DOTALL | re.IGNORECASE
-        )
-        if json_block:
-            if self.debug:
-                print("  - Found JSON code block")
-            try:
-                json_str = json_block.group(1).strip()
-                json.loads(json_str)  # Validate JSON
-                if self.debug:
-                    print("  ✔️ Successfully parsed JSON from code block")
-                return json_str
-            except json.JSONDecodeError:
-                if self.debug:
-                    print("  ⚠️ Found JSON block but failed to parse")
-        
-        # Strategy 2: Look for any JSON structures
-        if self.debug:
-            print("  - Searching for JSON structures")
-        
-        json_candidates = re.finditer(
-            r'(?:(?<=\n)|^)([\[{](?:[^\[\]{}]|(?1))*[\]}])',
-            text, 
-            re.DOTALL
-        )
-        
-        for i, match in enumerate(json_candidates):
-            if self.debug:
-                print(f"  - Checking candidate {i + 1}")
-            try:
-                candidate = match.group(1).strip()
-                # Validate JSON structure
-                if (candidate.startswith(('{', '[')) and 
-                    candidate.endswith(('}', ']')) and
-                    candidate.count('{') == candidate.count('}') and
-                    candidate.count('[') == candidate.count(']')):
-                    
-                    json.loads(candidate)
-                    if self.debug:
-                        print(f"  ✔️ Found valid JSON in candidate {i + 1}")
-                    return candidate
-            except json.JSONDecodeError:
-                if self.debug:
-                    print(f"  ⚠️ Candidate {i + 1} is not valid JSON")
-                continue
-
-        if self.debug:
-            print("  ❌ No valid JSON found in response")
-        print("⚠️ No valid JSON found in response")
+        for strategy in strategies:
+            result = strategy(text)
+            if result and self._validate_json(result):
+                return result
+            
         return None
+
+    def _extract_json_via_repair(self, text: str) -> Optional[str]:
+        """Attempt to repair malformed JSON."""        
+        # Simple bracket balancing
+        balanced = self._balance_json_brackets(text)
+        if balanced != text and self._validate_json(balanced):
+            return balanced
+        
+        return None
+
+    def _validate_json(self, json_str: str) -> bool:
+        """Thorough JSON validation with error reporting."""
+        try:
+            json.loads(json_str)
+            return True
+        except json.JSONDecodeError as e:
+            if self.debug:
+                print(f"JSON Validation Failed: {e.msg}")
+                print(f"Error position: {e.pos}")
+                print(f"Invalid JSON snippet: {json_str[e.pos-50:e.pos+50]}")
+            return False
 
     def _generate_plots_from_code(self, content: str, task_config: Dict[str, Any]) -> str:
         """Extract and execute Python code blocks to generate plots."""
@@ -353,3 +329,106 @@ class TaskProcessor:
                 Path(temp_path).unlink(missing_ok=True)
         
         return content
+
+    def _extract_json_via_code_block(self, text: str) -> Optional[str]:
+        """Extract JSON from markdown code blocks with multiple fallbacks."""
+        code_block_patterns = [
+            r'```json\n(.*?)\n```',  # Standard JSON code block
+            r'```\n(.*?)\n```',      # Generic code block
+            r'```.*?\n(.*?)\n```'    # Code block with language specifier
+        ]
+        
+        for pattern in code_block_patterns:
+            matches = re.findall(pattern, text, re.DOTALL)
+            if matches:
+                # Try all matches and return first valid JSON
+                for match in matches:
+                    cleaned = match.strip()
+                    if self._validate_json(cleaned):
+                        return cleaned
+                    # Handle possible incomplete code blocks
+                    if not cleaned.endswith(('}', ']')):
+                        for end in ['}', ']']:
+                            if end in text:
+                                candidate = cleaned + text.split(match)[-1].split(end)[0] + end
+                                if self._validate_json(candidate):
+                                    return candidate
+                # If no matches validate, try the longest candidate
+                longest_candidate = max(matches, key=len).strip()
+                balanced = self._balance_json_brackets(longest_candidate)
+                if self._validate_json(balanced):
+                    return balanced
+        
+        return None
+
+    def _extract_json_via_bracket_matching(self, text: str) -> Optional[str]:
+        """Find JSON structure through bracket matching with error recovery."""
+        open_brackets = {'{': 0, '[': 0}
+        close_brackets = {'}': '{', ']': '['}
+        start_index = None
+        bracket_stack = []
+        
+        for i, char in enumerate(text):
+            if char in open_brackets:
+                if not bracket_stack:
+                    start_index = i
+                bracket_stack.append(char)
+                open_brackets[char] += 1
+            elif char in close_brackets:
+                if bracket_stack and bracket_stack[-1] == close_brackets[char]:
+                    bracket_stack.pop()
+                    open_brackets[close_brackets[char]] -= 1
+                else:
+                    # Mismatched closing bracket - reset tracking
+                    start_index = None
+                    bracket_stack = []
+                    open_brackets = {k: 0 for k in open_brackets}
+                
+            # Check if we've balanced all brackets
+            if not bracket_stack and start_index is not None:
+                candidate = text[start_index:i+1]
+                if self._validate_json(candidate):
+                    return candidate
+                # Attempt to fix common issues in the candidate
+                fixed = self._sanitize_json(candidate)
+                if self._validate_json(fixed):
+                    return fixed
+        
+        # Fallback: Try to extract after first opening bracket
+        first_open = max(text.find('{'), text.find('['))
+        if first_open != -1:
+            candidate = text[first_open:]
+            balanced = self._balance_json_brackets(candidate)
+            if self._validate_json(balanced):
+                return balanced
+            # Try progressively shorter substrings
+            for end in range(len(candidate), first_open+1, -1):
+                if self._validate_json(candidate[:end]):
+                    return candidate[:end]
+        
+        return None
+
+    def _balance_json_brackets(self, json_str: str) -> str:
+        """Balance JSON brackets with stack-based approach."""
+        stack = []
+        balanced = []
+        
+        for char in json_str:
+            if char in ['{', '[']:
+                stack.append(char)
+            elif char in ['}', ']']:
+                if stack and ((char == '}' and stack[-1] == '{') or (char == ']' and stack[-1] == '[')):
+                    stack.pop()
+                else:
+                    # Add missing opening bracket
+                    missing = '{' if char == '}' else '['
+                    balanced.append(missing)
+                    stack.append(missing)
+            balanced.append(char)
+        
+        # Add remaining missing closing brackets
+        while stack:
+            missing = stack.pop()
+            balanced.append('}' if missing == '{' else ']')
+        
+        return ''.join(balanced)

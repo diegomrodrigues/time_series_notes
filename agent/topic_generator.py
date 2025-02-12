@@ -250,8 +250,7 @@ class TopicGenerator:
                 expect_json=True,
                 max_iterations=10,
                 use_previous_result=True,
-                additional_context=context,
-                stop_at="<!-- END -->"
+                additional_context=context
             )
             for i in range(1, num_steps + 1)
         ], debug=self.debug)

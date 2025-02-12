@@ -5,6 +5,7 @@ from .processor import TaskProcessor
 import json
 import tempfile
 from .utils import retry_on_error
+import re
 
 @dataclass
 class ChainStep:
@@ -206,12 +207,19 @@ class TaskChain:
 
     def _prepare_json_continuation_prompt(self, content: str) -> str:
         """Prepare prompt for continuing JSON structure."""
-        return (
-            "Continue completing this JSON structure.\n"
-            "Do not repeat any previous content, only provide the missing parts.\n"
-            "Exactly from you left and remember to end with the marker <!-- END -->.\n"
-        )
+        return f"""
+        Continue building this JSON structure exactly where it left off.
+        Add only new content - DO NOT REPEAT existing structure.
+        Maintain strict JSON syntax and schema compliance.
 
+        Current JSON state:
+        ```json
+        {content}
+        ```
+
+        New content to add:
+        """
+    
     def _prepare_text_continuation_prompt(self, last_chunk: str) -> str:
         """Prepare prompt for continuing text content."""
         return (
@@ -313,31 +321,105 @@ class TaskChain:
         # If no special conditions, stop after first iteration
         return True
 
-    def _combine_json_content(self, current: str, new: str) -> str:
-        """Attempt to combine two JSON contents intelligently."""
-        try:
-            current_json = json.loads(current) if current.strip() else {}
-            new_json = json.loads(new) if new.strip() else {}
+    def _handle_json_continuation(self, current_content: str, new_content: str) -> str:
+        """Handle JSON continuation with multiple fallback strategies."""
+        # First try strict JSON combination
+        combined = self._combine_json_content(current_content, new_content)
+        if combined != new_content:
+            return combined
             
-            # If both are valid JSON, merge them
-            if isinstance(current_json, dict) and isinstance(new_json, dict):
-                # Merge logic for topics
-                if "topics" in current_json and "topics" in new_json:
-                    current_json["topics"].extend(new_json["topics"])
-                    # Remove duplicates based on topic names
-                    seen = set()
-                    unique_topics = []
-                    for topic in current_json["topics"]:
-                        if topic["topic"] not in seen:
-                            seen.add(topic["topic"])
-                            unique_topics.append(topic)
-                    current_json["topics"] = unique_topics
-                
-                return json.dumps(current_json, indent=2)
-        except json.JSONDecodeError:
-            pass
+        # Fallback 1: Try to merge as text with overlap detection
+        overlap = self._find_overlap(current_content, new_content)
+        if overlap > 0:
+            combined = current_content + new_content[overlap:]
+            if self._validate_json(combined):
+                return combined
+            
+        # Fallback 2: Attempt bracket balancing
+        balanced = self._balance_json_brackets(current_content + new_content)
+        if balanced != current_content + new_content:
+            return balanced
         
-        return new  # Return new content if combination fails
+        # Fallback 3: Sanitize and retry combination
+        sanitized_current = self._sanitize_json(current_content)
+        sanitized_new = self._sanitize_json(new_content)
+        sanitized_combined = self._combine_json_content(sanitized_current, sanitized_new)
+        if sanitized_combined != sanitized_new:
+            return sanitized_combined
+        
+        # Final fallback: Return new content with validation
+        return new_content if self._validate_json(new_content) else current_content
+
+    def _validate_json(self, json_str: str) -> bool:
+        """Validate JSON with detailed error tracking."""
+        try:
+            json.loads(json_str)
+            return True
+        except json.JSONDecodeError as e:
+            if self.debug:
+                print(f"JSON Validation Error: {str(e)}")
+                print(f"Invalid JSON Content:\n{json_str[:500]}...")
+            return False
+
+    def _balance_json_brackets(self, json_str: str) -> str:
+        """Automatically balance JSON brackets if possible."""
+        open_brackets = {'{': 0, '[': 0}
+        close_brackets = {'}': '{', ']': '['}
+        
+        # Count existing brackets
+        for char in json_str:
+            if char in open_brackets:
+                open_brackets[char] += 1
+            elif char in close_brackets:
+                open_brackets[close_brackets[char]] -= 1
+        
+        # Add missing closing brackets
+        balanced = json_str
+        for bracket, count in open_brackets.items():
+            if count > 0:
+                balanced += close_brackets[bracket] * count
+            
+        return balanced
+
+    def _sanitize_json(self, json_str: str) -> str:
+        """Clean up common JSON issues before parsing."""
+        # Remove JSONP wrapper
+        json_str = re.sub(r'^[^{[]*', '', json_str)
+        json_str = re.sub(r'[^}\]]*$', '', json_str)
+        
+        # Fix trailing commas
+        json_str = re.sub(r',\s*([}\]])', r'\1', json_str)
+        
+        # Remove comments
+        json_str = re.sub(r'//.*?$|/\*.*?\*/', '', json_str, flags=re.MULTILINE|re.DOTALL)
+        
+        return json_str.strip()
+
+    def _combine_json_content(self, current: str, new: str) -> str:
+        """Improved JSON combination with deep merging."""
+        try:
+            current_obj = json.loads(current) if current.strip() else {}
+            new_obj = json.loads(new) if new.strip() else {}
+            
+            # Deep merge strategy
+            def merge(a, b):
+                if isinstance(a, dict) and isinstance(b, dict):
+                    for key in b:
+                        if key in a:
+                            a[key] = merge(a[key], b[key])
+                        else:
+                            a[key] = b[key]
+                    return a
+                elif isinstance(a, list) and isinstance(b, list):
+                    return a + b
+                else:
+                    return b if b is not None else a
+                
+            merged = merge(current_obj, new_obj)
+            return json.dumps(merged, indent=2, ensure_ascii=False)
+            
+        except json.JSONDecodeError:
+            return new
 
     def _handle_file_uploads(self, step: ChainStep) -> Optional[List[Any]]:
         """Handle file uploads for a step."""
@@ -382,20 +464,6 @@ class TaskChain:
                 return i
                     
         return 0
-
-    def _handle_json_continuation(self, current_content: str, new_content: str) -> str:
-        """Handle continuation of JSON content by intelligently combining old and new."""
-        # First try to combine as proper JSON
-        combined = self._combine_json_content(current_content, new_content)
-        if combined != new_content:
-            return combined
-            
-        # If JSON combination fails, try to find and remove overlap
-        overlap = self._find_overlap(current_content, new_content)
-        if overlap > 0:
-            return current_content + new_content[overlap:]
-        
-        return current_content + new_content
 
     def _handle_text_continuation(self, current_content: str, new_content: str) -> str:
         """Handle continuation of text content by removing overlaps."""
