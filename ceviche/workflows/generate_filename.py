@@ -18,13 +18,6 @@ class GenerateFilenameWorkflow(Workflow):
         existing_files = [f for f in directory.glob("*.md")]
         return {int(f.name.split('.')[0]) for f in existing_files if f.name.split('.')[0].isdigit()}
 
-    def _check_similar_exists(self, directory: Path, suggested_name: str) -> str | None:
-        """Check if a similar filename exists and return it if found."""
-        for existing_file in directory.glob("*.md"):
-            existing_name = ' '.join(existing_file.name.split(' ')[1:]).replace('.md', '')
-            if existing_name.lower() == suggested_name.lower():
-                return existing_file.name
-        return None
 
     def run(self, ctx: Context, args: Dict[str, Any]) -> Tuple[str, Path]:
         """Generates a numbered filename, handling existing files."""
@@ -36,10 +29,6 @@ class GenerateFilenameWorkflow(Workflow):
             raise ValueError(f"Directory does not exist: {directory}")
 
         suggested_name = self.generate_filename_task.run(ctx, {"topic": topic})
-
-        # Check for existing file with the same name
-        if similar_file := self._check_similar_exists(directory, suggested_name):
-            return similar_file, directory / similar_file
 
         # Get existing numbers
         existing_numbers = self._get_existing_numbers(directory)

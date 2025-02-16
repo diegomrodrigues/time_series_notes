@@ -24,18 +24,6 @@ class GenerateFilenameTask(Task, ModelUtilsMixin):
         filename = response.text.strip()
 
         if ctx.get("mock_api"):
-            return f"{topic}.md"
-
-        #  Filename validation (from old FilenameHandler logic)
-        if not filename:
-            raise Exception("Filename generation failed to return a filename.")
-        if not re.match(r"^[A-Za-z0-9 ]+$", filename):
-            raise Exception(f"Invalid characters in filename: {filename}")
-        if len(filename) > 50:
-            raise Exception(f"Filename too long (max 50 chars): {filename}")
-        if not filename[0].isalpha() or not filename[0].isupper():
-            raise Exception(f"Filename must start with a capital letter: {filename}")
-        if not all(word[0].isupper() or word.islower() for word in filename.split()):
-            raise Exception(f"Filename must have proper spacing and capitalization: {filename}")
+            return topic
 
         return filename 

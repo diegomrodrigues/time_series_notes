@@ -4,10 +4,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from ceviche.core.agent import Agent
 from ceviche.core.context import Context
-from ceviche.workflows.create_topics import CreateTopicsWorkflow
-from ceviche.workflows.generate_initial_draft import GenerateInitialDraftWorkflow
-from ceviche.workflows.enhance_draft import EnhanceDraftWorkflow
-from ceviche.workflows.generate_filename import GenerateFilenameWorkflow
+import re
 
 class DirectoryProcessorAgent(Agent):
     """Handles the processing of directories and their contents."""
@@ -99,18 +96,25 @@ class DirectoryProcessorAgent(Agent):
         if self.debug:
             print(f"Processing section: {section_name}")
 
-        section_dir = directory / section_name
+        # Get existing section numbers and create numbered directory
+        existing_sections = self._get_existing_numbers(directory, is_directory=True)
+        section_num = 1
+        while section_num in existing_sections:
+            section_num += 1
+            
+        section_dir = directory / f"{section_num:02d}. {section_name}"
         section_dir.mkdir(parents=True, exist_ok=True)
 
         previous_topics: List[Dict[str, Any]] = []
 
-        for topic_name in subtopics:  # Iterate through subtopics
+        # Process each subtopic with numbering
+        for topic_idx, topic_name in enumerate(subtopics, start=1):
             self._process_topic(
                 ctx,
                 args,
                 section_dir,
                 section_name,
-                topic_name,
+                f"{topic_idx:02d}. {topic_name}",
                 previous_topics,
                 max_previous_topics,
             )
@@ -125,7 +129,7 @@ class DirectoryProcessorAgent(Agent):
         args: Dict[str, Any],
         section_dir: Path,
         section_name: str,
-        topic_name: str,
+        topic_name: str,  # Now comes pre-formatted with number
         previous_topics: List[Dict[str, Any]],
         max_previous_topics: int,
     ):
@@ -151,7 +155,11 @@ class DirectoryProcessorAgent(Agent):
 
         # Generate Filename and Save
         filename_workflow = self.get_workflow("generate_filename", ctx, args)
-        filename_args = {"topic": topic_name, "content": topic_name, "directory": str(section_dir)}
+        filename_args = {
+            "topic": topic_name.split('. ')[1],  # Remove numbering from filename task
+            "content": topic_name.split('. ')[1],
+            "directory": str(section_dir)
+        }
         filename, filepath = filename_workflow.run(ctx, filename_args)
 
         filepath.write_text(enhanced_draft, encoding="utf-8")
@@ -167,6 +175,16 @@ class DirectoryProcessorAgent(Agent):
                 f"--- END {topic_result['topic']} ---",
             ])
         return "\n".join(context_parts)
+
+    def _get_existing_numbers(self, directory: Path, is_directory: bool = False) -> set[int]:
+        """Get set of existing numbers in the directory (either files or directories)."""
+        items = [f for f in directory.iterdir() if f.is_dir()] if is_directory else [f for f in directory.glob("*.md")]
+        numbers = set()
+        for item in items:
+            match = re.match(r'^(\d+)\.', item.name)
+            if match:
+                numbers.add(int(match.group(1)))
+        return numbers
 
     def post_execution(self, ctx: Context, args: Dict[str, Any], result: Any):
         """Clean up or finalize after processing."""
