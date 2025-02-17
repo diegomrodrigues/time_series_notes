@@ -17,18 +17,20 @@ class CreateTopicsWorkflow(
     def before_start(self, ctx: Dict[str, Any], args: Dict[str, Any]):
         super().before_start(ctx, args)  # Call super to ensure hooks are called
         print("Starting CreateTopicsWorkflow")
-        ctx["directory"] = args.get("directory", ".")
 
         self.create_topics = self.load_task("create_topics", ctx, args)
         self.consolidate_subtopics = self.load_task("consolidate_subtopics", ctx, args)
 
     def run(self, ctx: Dict[str, Any], args: Dict[str, Any]) -> Any:
         perspectives = args.get("perspectives")
+        directory = args.get("directory", ".")
+
         all_topics = []
 
         if perspectives and len(perspectives) > 0:
             for perspective in perspectives:
                 create_topics_args = {
+                    'directory': directory,
                     'perspective': perspective
                 }
                 topics = self.create_topics.run(ctx, create_topics_args)
