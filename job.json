@@ -1,3 +1,9 @@
 {
+    "context": "Advanced Study of Time Series Analysis and Mathematics",
+    "perspectives": [
+        "Foque nos fundamentos matemáticos e estatísticos para séries temporais, incluindo processos estocásticos, teoria da probabilidade, análise funcional e provas matemáticas relevantes.",
+        "Foque nos conceitos fundamentais de análise de séries temporais, incluindo estacionariedade, decomposição, sazonalidade, tendências e métodos de previsão.",
+        "Foque nos aspectos computacionais e de implementação, incluindo algoritmos de processamento de séries temporais, otimização de código e análise em larga escala."    
+    ],
     "directory": "23. GARCH Model"
 }

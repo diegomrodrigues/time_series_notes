@@ -57,6 +57,11 @@ class ModelUtilsMixin:
 
     def extract_json(self, text: str) -> Optional[Dict[str, Any]]:
         """Extracts JSON content from the given text, handling common issues."""
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+        
         # Remove any text outside of JSON code blocks
         match = re.search(r"```json\n(.*?)\n```", text, re.DOTALL)
         if match:

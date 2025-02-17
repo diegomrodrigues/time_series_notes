@@ -72,6 +72,7 @@ class DirectoryProcessorAgent(Agent):
         create_topics_args = {
             "directory": str(directory),
             "content": ctx["context"],
+            "perspectives": args.get("perspectives")
         }
         topics = create_topics_workflow.run(ctx, create_topics_args)
 

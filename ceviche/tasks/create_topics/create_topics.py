@@ -1,3 +1,4 @@
+from ceviche.core.context import Context
 from ceviche.core.task import Task
 from typing import Any, Dict
 from ceviche.core.utilities.model_utils import ModelUtilsMixin
@@ -16,13 +17,13 @@ class CreateTopicsTask(
     def __init__(self, task_config: Dict[str, Any], task_name: str):
         super().__init__(task_config, task_name)
 
-    def run(self, ctx: Dict[str, Any], args: Dict[str, Any]) -> Any:
+    def run(self, ctx: Context, args: Dict[str, Any]) -> Any:
         print(f"Running CreateTopicsTask")
 
         self.model = self.init_model(ctx, args)
 
         # 1. Prepare the prompt:
-        content = args.get("content", "")  # Get content from arguments
+        content = ctx.get("content", "")  # Get content from arguments
         prompt = self.prepare_prompt(self.task_config, content)
 
         # 2. File Handling (using the mixin):
@@ -37,7 +38,7 @@ class CreateTopicsTask(
         # 4. Process and return the result:
         if not ctx.get("mock_api", False):
             extracted_json = self.extract_json(result)
-            if not extracted_json or not self.validate_json(extracted_json):
+            if not extracted_json:
                 raise Exception("Failed to extract valid JSON from response.")
         else:
             extracted_json = self._mock_json()

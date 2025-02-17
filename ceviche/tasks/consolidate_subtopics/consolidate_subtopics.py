@@ -1,3 +1,4 @@
+from ceviche.core.context import Context
 from ceviche.core.task import Task
 from typing import Any, Dict
 from ceviche.core.utilities.model_utils import ModelUtilsMixin
@@ -7,7 +8,7 @@ class ConsolidateSubtopicsTask(Task, ModelUtilsMixin, JsonUtilitiesMixin):
     def __init__(self, task_config: Dict[str, Any], task_name: str):
         super().__init__(task_config, task_name)
 
-    def run(self, ctx: Dict[str, Any], args: Dict[str, Any]) -> Any:
+    def run(self, ctx: Context, args: Dict[str, Any]) -> Any:
         print(f"Running ConsolidateSubTopicsTask with config")
 
         self.model = self.init_model(ctx, args)
