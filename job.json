@@ -1,7 +1,8 @@
 {
-    "max_workers": 4,
+    "max_workers": 2,
     "max_previous_topics": 5,
     "context": "Advanced Study of Time Series Analysis and Mathematics",
+    "json_per_perspective": 3,
     "perspectives": [
         "Foque nos fundamentos matemáticos e estatísticos para séries temporais, incluindo processos estocásticos, teoria da probabilidade, análise funcional e provas matemáticas relevantes.",
         "Foque nos conceitos fundamentais de análise de séries temporais, incluindo estacionariedade, decomposição, sazonalidade, tendências e métodos de previsão.",

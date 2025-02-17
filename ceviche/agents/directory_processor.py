@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import List, Optional, Dict, Any
 import json
-from concurrent.futures import ThreadPoolExecutor
 from ceviche.core.agent import Agent
 from ceviche.core.context import Context
 import re
@@ -23,31 +22,22 @@ class DirectoryProcessorAgent(Agent):
     def execute(self, ctx: Context, args: Dict[str, Any]) -> Any:
         """Process a directory: create topics, generate drafts, and enhance."""
         directory = Path(args["directory"])
-        max_workers = args.get("max_workers", 4)  # Default to 4 workers
         max_previous_topics = args.get("max_previous_topics", 3)
 
         try:
             # Create Topics
             topics = self._create_topics(directory, ctx, args)
 
-            # Process Sections (using ThreadPoolExecutor for parallel processing)
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = []
-                for section in topics["topics"]:
-                    future = executor.submit(
-                        self._process_section,
-                        ctx,
-                        args,
-                        directory,
-                        section["topic"],
-                        section["sub_topics"],
-                        max_previous_topics,
-                    )
-                    futures.append(future)
-                
-                # Wait for all futures to complete before continuing
-                for future in futures:
-                    future.result()
+            # Process Sections sequentially
+            for section in topics["topics"]:
+                self._process_section(
+                    ctx,
+                    args,
+                    directory,
+                    section["topic"],
+                    section["sub_topics"],
+                    max_previous_topics,
+                )
             
         except Exception as e:
             print(f"❌ Failed to process directory: {directory}")
@@ -72,7 +62,8 @@ class DirectoryProcessorAgent(Agent):
         create_topics_args = {
             "directory": str(directory),
             "content": ctx["context"],
-            "perspectives": args.get("perspectives")
+            "perspectives": args.get("perspectives"),
+            "json_per_perspective": args.get("json_per_perspective")
         }
         topics = create_topics_workflow.run(ctx, create_topics_args)
 
@@ -106,11 +97,11 @@ class DirectoryProcessorAgent(Agent):
         section_dir = directory / f"{section_num:02d}. {section_name}"
         section_dir.mkdir(parents=True, exist_ok=True)
 
-        previous_topics: List[Dict[str, Any]] = []
+        previous_topics = []
 
         # Process each subtopic with numbering
         for topic_idx, topic_name in enumerate(subtopics, start=1):
-            self._process_topic(
+            enhanced_draft = self._process_topic(
                 ctx,
                 args,
                 directory,
@@ -120,10 +111,15 @@ class DirectoryProcessorAgent(Agent):
                 previous_topics,
                 max_previous_topics,
             )
+            
             # Add to previous_topics list (for context in subsequent iterations)
             if len(previous_topics) >= max_previous_topics:
                 previous_topics.pop(0)  # Keep the list to max_previous_topics
-            previous_topics.append({"topic": topic_name, "content": ctx["current_topic_content"]})
+            
+            previous_topics.append({
+                "topic": topic_name, 
+                "content": enhanced_draft
+            })
 
     def _process_topic(
         self,
@@ -172,14 +168,16 @@ class DirectoryProcessorAgent(Agent):
         filepath.write_text(enhanced_draft, encoding="utf-8")
         print(f"✔️ Saved topic to: {filepath}")
 
+        return enhanced_draft
+
     def build_context_string(self, previous_topics: List[Dict[str, Any]]) -> str:
         """Builds a context string from previous topics."""
         context_parts = []
         for topic_result in previous_topics:
             context_parts.extend([
-                f"--- START {topic_result['topic']} ---",
+                f"<PreviousTopicContent topic='{topic_result['topic']}'>",
                 topic_result['content'],
-                f"--- END {topic_result['topic']} ---",
+                f"<PreviousTopicContent topic='{topic_result['topic']}'>",
             ])
         return "\n".join(context_parts)
 

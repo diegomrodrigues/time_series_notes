@@ -23,18 +23,20 @@ class CreateTopicsWorkflow(
 
     def run(self, ctx: Context, args: Dict[str, Any]) -> Any:
         perspectives = args.get("perspectives")
+        json_per_perspective = args.get("json_per_perspective", 3)
         directory = args.get("directory", ".")
 
         all_topics = []
 
         if perspectives and len(perspectives) > 0:
             for perspective in perspectives:
-                create_topics_args = {
-                    'directory': directory,
-                    'perspective': perspective
-                }
-                topics = self.create_topics.run(ctx, create_topics_args)
-                all_topics.append(topics)
+                for _ in range(json_per_perspective+1):
+                    create_topics_args = {
+                        'directory': directory,
+                        'perspective': perspective
+                    }
+                    topics = self.create_topics.run(ctx, create_topics_args)
+                    all_topics.append(topics)
         else:
             topics = self.create_topics.run(ctx, {})
             all_topics.append(topics)
