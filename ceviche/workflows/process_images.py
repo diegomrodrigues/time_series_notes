@@ -1,3 +1,4 @@
+from ceviche.core.context import Context
 from ceviche.core.workflow import Workflow
 from ceviche.core.utilities.model_utils import ModelUtilsMixin
 from ceviche.core.utilities.file_utils import WithReadAndWriteFilesMixin
@@ -17,7 +18,7 @@ class ProcessImagesWorkflow(
         super().before_start(ctx, args)
         self.process_image_task = self.load_task("process_image", ctx, args)
 
-    def run(self, ctx: Dict[str, Any], args: Dict[str, Any]) -> Any:
+    def run(self, ctx: Context, args: Dict[str, Any]) -> Any:
         base_dir = Path(args.get("base_dir"))
         excluded_dirs = args.get("excluded_dirs", ["exclude_dir"])
         pdf_file = Path(args.get("pdf_file"))
@@ -30,7 +31,7 @@ class ProcessImagesWorkflow(
         target_dirs = self._find_image_directories(base_dir, excluded_dirs)
 
         for directory in target_dirs:
-            self._process_directory_images(directory, pdf_file)
+            self._process_directory_images(ctx, directory, pdf_file)
 
         print("ProcessImagesWorkflow completed")
         return None  # Workflows generally don't return the processed content directly.
@@ -44,7 +45,7 @@ class ProcessImagesWorkflow(
             target_dirs.append(path.parent)
         return target_dirs
 
-    def _process_directory_images(self, directory: Path, pdf_file: Path) -> None:
+    def _process_directory_images(self, ctx: Context, directory: Path, pdf_file: Path) -> None:
         """Process all images in a directory's images folder."""
         images_dir = directory / "images"
         if not images_dir.exists():
@@ -54,7 +55,7 @@ class ProcessImagesWorkflow(
         image_entries = []
         for image_file in images_dir.iterdir():
             if image_file.is_file() and image_file.suffix.lower() in [".png", ".jpg", ".jpeg"]:
-                result = self._process_single_image(image_file, pdf_file)
+                result = self._process_single_image(ctx, image_file, pdf_file)
                 if result:
                     image_entries.append(result)
 
@@ -63,12 +64,13 @@ class ProcessImagesWorkflow(
             self._generate_markdown_summary(directory, image_entries)
 
 
-    def _process_single_image(self, image_file: Path, pdf_file: Path) -> Optional[Dict]:
+    def _process_single_image(self, ctx: Context, image_file: Path, pdf_file: Path) -> Optional[Dict]:
         """Process a single image with its associated PDF."""
         print(f"Processing image: {image_file.name}")
 
         try:
             result = self.process_image_task.run(
+                ctx,
                 args={
                     "image_file": str(image_file),
                     "pdf_file": str(pdf_file),

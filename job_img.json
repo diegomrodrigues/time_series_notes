@@ -1,0 +1,5 @@
+{
+    "directory": "23. GARCH Model",
+    "excluded_folders": ["exclude_dir"],
+    "target_folders": ["20. Time Series", "23. GARCH Model"]
+}

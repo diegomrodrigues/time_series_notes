@@ -19,6 +19,25 @@
             "console": "integratedTerminal",
             "justMyCode": true,
             "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Debug Image Processor",
+            "type": "python",
+            "request": "launch",
+            "program": "run.py",
+            "args": [
+                "--agent",
+                "image_processor",
+                "--api_key",
+                "YOUR_API_KEY",
+                "--mock_api",
+                "--args",
+                "job_img.json",
+                "--debug"
+            ],
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}"
         }
     ]
 }
