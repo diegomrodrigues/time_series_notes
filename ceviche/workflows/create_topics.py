@@ -28,9 +28,14 @@ class CreateTopicsWorkflow(
 
         if perspectives and len(perspectives) > 0:
             for perspective in perspectives:
-                ctx["content"] = perspective
-                topics = self.create_topics.run(ctx, args)
+                create_topics_args = {
+                    'perspective': perspective
+                }
+                topics = self.create_topics.run(ctx, create_topics_args)
                 all_topics.append(topics)
+        else:
+            topics = self.create_topics.run(ctx, {})
+            all_topics.append(topics)
 
         # Merge topics using the dedicated method
         merged_topics = self._merge_topics(all_topics)

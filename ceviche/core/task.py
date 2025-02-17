@@ -9,7 +9,7 @@ class Task(ABC):
     def __init__(self, task_config: Dict[str, Any], task_name: str):
         self.task_config = task_config
         self.task_name = task_name
-        self.model_name = task_config.get('model_name', 'default-model')  # Example
+        self.model_name = task_config.get('model_name', 'gemini-2.0-flash-exp')  # Example
         self.temperature = task_config.get('temperature', 0.7)
         self.response_mime_type = task_config.get('response_mime_type', 'text/plain')
         # ... other common task configurations ...

@@ -23,7 +23,7 @@ class CreateTopicsTask(
         self.model = self.init_model(ctx, args)
 
         # 1. Prepare the prompt:
-        content = ctx.get("content", "")  # Get content from arguments
+        content = args.get("perspective", "")  # Get content from arguments
         prompt = self.prepare_prompt(self.task_config, content)
 
         # 2. File Handling (using the mixin):
