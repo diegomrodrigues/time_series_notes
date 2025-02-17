@@ -14,14 +14,14 @@ class CreateTopicsWorkflow(
     def __init__(self):
         super().__init__()
 
-    def before_start(self, ctx: Dict[str, Any], args: Dict[str, Any]):
+    def before_start(self, ctx: Context, args: Dict[str, Any]):
         super().before_start(ctx, args)  # Call super to ensure hooks are called
         print("Starting CreateTopicsWorkflow")
 
         self.create_topics = self.load_task("create_topics", ctx, args)
         self.consolidate_subtopics = self.load_task("consolidate_subtopics", ctx, args)
 
-    def run(self, ctx: Dict[str, Any], args: Dict[str, Any]) -> Any:
+    def run(self, ctx: Context, args: Dict[str, Any]) -> Any:
         perspectives = args.get("perspectives")
         directory = args.get("directory", ".")
 
@@ -56,7 +56,7 @@ class CreateTopicsWorkflow(
 
         return self.final_result
 
-    def after_start(self, ctx: Dict[str, Any], args: Dict[str, Any]):
+    def after_start(self, ctx: Context, args: Dict[str, Any]):
         super().after_start(ctx, args)  # Call super to ensure hooks are called
         json_str = self.dump_json(ctx["topics"])
         self.write_file(

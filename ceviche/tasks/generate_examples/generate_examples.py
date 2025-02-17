@@ -36,9 +36,9 @@ class GenerateExamplesTask(
 
         # 4. Generate plots if enabled in the task configuration
         if self.task_config.get("generate_plots", False):  # Check config
-            directory = args.get("directory")
-            if directory:
-                directory = Path(directory)
-            result = self.generate_plots_from_code(result, self.task_config, directory)
+            base_directory = args.get("base_directory")
+            if base_directory:
+                base_directory = Path(base_directory)
+            result = self.generate_plots_from_code(ctx, result, self.task_config, base_directory)
 
         return result 

@@ -29,6 +29,7 @@ class EnhanceDraftWorkflow(
         content = args.get("content")
         if not content:
             raise ValueError("Content is required in args for EnhanceDraftWorkflow.")
+        base_directory = args.get("base_directory")
         directory = args.get("directory")
 
         # --- Iteration Loop ---
@@ -39,8 +40,8 @@ class EnhanceDraftWorkflow(
             content = self.cleanup_task.run(ctx, {"content": content})
             content = self.generate_logical_steps_task.run(ctx, {"content": content})
             content = self.generate_step_proofs_task.run(ctx, {"content": content})
-            content = self.generate_examples_task.run(ctx, {"content": content, "directory": directory})
-            content = self.inject_images_task.run(ctx, {"content": content, "directory": directory})
+            content = self.generate_examples_task.run(ctx, {"content": content, "base_directory": base_directory})
+            content = self.inject_images_task.run(ctx, {"content": content, "base_directory": base_directory})
             content = self.format_math_task.run(ctx, {"content": content})
             content = self.cleanup_task.run(ctx, {"content": content})
 

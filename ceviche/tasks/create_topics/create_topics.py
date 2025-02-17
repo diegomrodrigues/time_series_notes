@@ -30,6 +30,8 @@ class CreateTopicsTask(
         pdf_files = self.get_pdf_files(args.get("directory", "."))
         uploaded_files = self.upload_files(pdf_files)
 
+        print(f"Uploaded files for topic generation: {uploaded_files}")
+
         # 3. Interact with the model (using mixin methods):
         chat = self.start_chat(files=uploaded_files)
         response = self.send_message(chat=chat, user_content=prompt, files=uploaded_files)

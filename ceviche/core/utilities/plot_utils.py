@@ -9,13 +9,17 @@ import tempfile
 from pathlib import Path
 import time
 
+from ceviche.core.context import Context
+from ceviche.core.models.gemini import GeminiModel
+from ceviche.core.utilities.model_utils import ModelUtilsMixin
+
 
 class PlotGenerationMixin:
     """Mixin class for generating plots from code blocks in content."""
     
-    def generate_plots_from_code(self, content: str, task_config: Dict[str, Any], directory: Optional[Path] = None) -> str:
+    def generate_plots_from_code(self, ctx: Context, content: str, task_config: Dict[str, Any], directory: Optional[Path] = None) -> str:
         """Orchestrates plot generation from code blocks in content."""
-        print("\n🔍 Plot generation from code blocks")
+        print("🔍 Plot generation from code blocks")
 
         base_dir = self._get_base_directory(directory, task_config)
         images_dir = base_dir / "images"
@@ -23,7 +27,7 @@ class PlotGenerationMixin:
         
         code_blocks = self._find_plot_code_blocks(content)
         
-        return self._process_code_blocks(content, code_blocks, images_dir)
+        return self._process_code_blocks(ctx, content, code_blocks, images_dir)
 
     def _get_base_directory(self, directory: Optional[Path], task_config: Dict[str, Any]) -> Path:
         """Determine the base directory for plot generation."""
@@ -38,30 +42,43 @@ class PlotGenerationMixin:
     def _find_plot_code_blocks(self, content: str) -> List[tuple[str, str]]:
         """Identify Python code blocks containing plotting code."""
         code_patterns = [
-            r'```python\n(.*?)\n```',
-            r'```py\n(.*?)\n```'
+            r'(^|\n)>?\s*```python\s*?\n(.*?)\n>?\s*```',  # Handles quoted and regular blocks
+            r'(^|\n)>?\s*```py\s*?\n(.*?)\n>?\s*```'       # Handles quoted and regular blocks
         ]
         
         plotting_keywords = ['plt.', 'matplotlib', 'seaborn', 'sns.']
         code_blocks = []
         
         for pattern in code_patterns:
-            for match in re.finditer(pattern, content, re.DOTALL):
-                raw_code = match.group(1).strip()
-                if any(keyword in raw_code for keyword in plotting_keywords):
-                    code_blocks.append((match.group(0), raw_code))
+            for match in re.finditer(pattern, content, re.DOTALL | re.MULTILINE):
+                # Extract code and clean leading > markers
+                raw_code = match.group(2).strip()
+                cleaned_code = '\n'.join(
+                    [line.lstrip('>').strip() for line in raw_code.split('\n')]
+                )
+                if any(keyword in cleaned_code for keyword in plotting_keywords):
+                    code_blocks.append((match.group(0), cleaned_code))
         
         print(f"  - Found {len(code_blocks)} potential plotting code blocks")
             
         return code_blocks
 
-    def _process_code_blocks(self, content: str, code_blocks: List[tuple[str, str]], images_dir: Path) -> str:
+    def _process_code_blocks(self, ctx: Context, content: str, code_blocks: List[tuple[str, str]], images_dir: Path) -> str:
         """Process all identified code blocks to generate plots."""
         updated_content = content
         
+        # Initialize model for code correction
+        model = ModelUtilsMixin().init_model(ctx, {
+            "model_name": "gemini-2.0-flash-exp",
+            "system_instruction": "Please correct the indentation and syntax of this Python code to make it runnable."
+        })
+        
         for i, (original_block, code) in enumerate(code_blocks, start=1):
             try:
-                temp_path = self._create_temp_script(code, images_dir, i)
+                # Get corrected code from model
+                corrected_code = self._get_corrected_code(model, code)
+                
+                temp_path = self._create_temp_script(corrected_code, images_dir, i)
                 success = self._execute_plot_script(temp_path, images_dir, i)
                 
                 if success:
@@ -74,6 +91,12 @@ class PlotGenerationMixin:
                 Path(temp_path).unlink(missing_ok=True)
                 
         return updated_content
+
+    def _get_corrected_code(self, model: GeminiModel, raw_code: str) -> str:
+        """Use Gemini to correct and format Python code."""
+        chat = model.start_chat()
+        response = model.send_message(chat, raw_code)
+        return response.text.strip().strip('`').replace('python\n', '')
 
     def _create_temp_script(self, code: str, images_dir: Path, index: int) -> str:
         """Create temporary Python script with necessary imports and savefig."""

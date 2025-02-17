@@ -113,6 +113,7 @@ class DirectoryProcessorAgent(Agent):
             self._process_topic(
                 ctx,
                 args,
+                directory,
                 section_dir,
                 section_name,
                 f"{topic_idx:02d}. {topic_name}",
@@ -128,6 +129,7 @@ class DirectoryProcessorAgent(Agent):
         self,
         ctx: Context,
         args: Dict[str, Any],
+        base_dir: Path,
         section_dir: Path,
         section_name: str,
         topic_name: str,  # Now comes pre-formatted with number
@@ -151,7 +153,11 @@ class DirectoryProcessorAgent(Agent):
 
         # Enhance Draft
         enhance_workflow = self.get_workflow("enhance_draft", ctx, args)
-        enhance_args = {"content": initial_draft, "directory": str(section_dir)}
+        enhance_args = {
+            "content": initial_draft,
+            "base_directory": str(base_dir), 
+            "directory": str(section_dir)
+        }
         enhanced_draft = enhance_workflow.run(ctx, enhance_args)
 
         # Generate Filename and Save
