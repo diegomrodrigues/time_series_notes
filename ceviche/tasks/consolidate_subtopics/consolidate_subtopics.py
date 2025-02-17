@@ -13,10 +13,9 @@ class ConsolidateSubtopicsTask(Task, ModelUtilsMixin, JsonUtilitiesMixin):
 
         self.model = self.init_model(ctx, args)
 
-        # Input is the output from create_topics
-        input_json = ctx.get("initial_topics")
+        input_json = args.get("topics")
         if not input_json:
-            raise ValueError("No input from create_topics found in context.")
+            raise ValueError("No input from topics found in context.")
 
         # Prepare prompt
         prompt = self.prepare_prompt(

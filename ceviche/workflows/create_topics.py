@@ -34,18 +34,18 @@ class CreateTopicsWorkflow(
 
         # Merge topics using the dedicated method
         merged_topics = self._merge_topics(all_topics)
-        ctx["merged_topics"] = merged_topics
 
         # --- Consolidate Subtopics Task ---
-        consolidated_topics = self.consolidate_subtopics.run(ctx, args)
+        consolidated_args = {
+            "topics": merged_topics
+        }
+        consolidated_topics = self.consolidate_subtopics.run(ctx, consolidated_args)
 
         # --- Final Result Processing ---
         final_result_str = self.deduplicate_json_keys(
             json.dumps(consolidated_topics)
         )
         self.final_result = json.loads(final_result_str)
-
-        ctx["consolidated_topics"] = self.final_result
 
         return self.final_result
 

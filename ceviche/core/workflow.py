@@ -66,7 +66,7 @@ class Workflow(ABC):
 
     def before_start(self, ctx: Dict[str, Any], args: Dict[str, Any]):
         """Hook called before the workflow starts."""
-        print("Workflow before_start")
+        print(f"Workflow before_start")
 
     @abstractmethod
     def run(self, ctx: Dict[str, Any], args: Dict[str, Any]) -> Any:
